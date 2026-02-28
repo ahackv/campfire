@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Into the Deep</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, system-ui, sans-serif;
+      }
+
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #021325;
+      }
+
+      #hud {
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        z-index: 10;
+        padding: 10px 14px;
+        border-radius: 12px;
+        background: rgba(0, 6, 20, 0.45);
+        border: 1px solid rgba(184, 220, 255, 0.25);
+        color: #dcf0ff;
+        line-height: 1.35;
+        backdrop-filter: blur(4px);
+      }
+
+      #message {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        color: #f5f8ff;
+        z-index: 20;
+        pointer-events: none;
+        font-size: clamp(1rem, 2.2vw, 1.35rem);
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+      }
+
+      #message strong {
+        font-size: clamp(1.4rem, 3vw, 2.2rem);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="hud">
+      <div><strong>Into the Deep</strong></div>
+      <div id="depth">Depth: 0m</div>
+      <div id="danger">Danger: Calm</div>
+      <div>Controls: ← → ↑ ↓ / WASD</div>
+    </div>
+    <div id="message">
+      <div>
+        <strong>🌊 Into the Deep</strong><br />
+        Swim down. The deeper you go, the less the light protects you.<br />
+        Avoid creatures in the dark.
+      </div>
+    </div>
+
+    <script type="module" src="./game.js"></script>
+  </body>
+</html>
