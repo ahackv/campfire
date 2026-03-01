@@ -36,6 +36,28 @@ let bassTimer = null;
 const progression = [220, 174.61, 196, 164.81, 246.94, 196, 220, 174.61];
 let progIndex = 0;
 
+const MEME_TRIGGERS = [
+  { key: "jet 2 holiday", label: "Jet 2 Holiday", tones: [523.25, 659.25, 783.99] },
+  { key: "wait wait wait", label: "Wait Wait Wait", tones: [349.23, 349.23, 293.66, 261.63] },
+  { key: "wide putin", label: "Wide Putin", tones: [246.94, 293.66, 369.99] },
+  { key: "pongbib fail", label: "Pongbib Fail", tones: [392, 329.63, 261.63] },
+  { key: "pongbib fail", label: "Pongbib Fail", tones: [392, 329.63, 261.63] },
+  { key: "plh", label: "PLH", tones: [440, 554.37, 440, 659.25] },
+  { key: "1,000,000,000 iq", label: "1,000,000,000 IQ", tones: [261.63, 329.63, 392, 523.25, 783.99] },
+  { key: "1000000000 iq", label: "1,000,000,000 IQ", tones: [261.63, 329.63, 392, 523.25, 783.99] },
+];
+
+const FUNNY_NUMBERS = {
+  67: "six seven",
+  69: "nice",
+  420: "blaze",
+  666: "chaos",
+  777: "lucky",
+  1337: "leet",
+  1000000000: "1,000,000,000 IQ",
+};
+const seenFunnyNumbers = new Set();
+
 function ensureAudioCtx() {
   if (!audioCtx) {
     const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -90,6 +112,31 @@ function stopMusic() {
 function toggleMusic() {
   if (musicOn) stopMusic();
   else startMusic();
+}
+
+function playMemeJingle(tones) {
+  tones.forEach((tone, i) => {
+    setTimeout(() => playTone(tone, 0.12, "square", 0.024), i * 95);
+  });
+}
+
+function checkMemeMessage(msg) {
+  const lower = msg.toLowerCase();
+  const trigger = MEME_TRIGGERS.find((m) => lower.includes(m.key));
+  if (!trigger) return false;
+  playMemeJingle(trigger.tones);
+  setTimeout(() => addBubble(`Meme unlocked: ${trigger.label} 😂`), 80);
+  return true;
+}
+
+function checkFunnyNumbers(values = []) {
+  values.forEach((value) => {
+    const rounded = Math.floor(value);
+    if (!FUNNY_NUMBERS[rounded] || seenFunnyNumbers.has(rounded)) return;
+    seenFunnyNumbers.add(rounded);
+    playMemeJingle([493.88, 659.25, 783.99, 659.25]);
+    addBubble(`Funny number ${rounded} hit: ${FUNNY_NUMBERS[rounded]} 😎`);
+  });
 }
 
 
@@ -222,6 +269,7 @@ function setupMode(id) {
   clearGameUI();
   state.mode = id;
   state.running = true;
+  seenFunnyNumbers.clear();
   const m = MODES.find((x) => x.id === id);
   el.modeTitle.textContent = m.title;
   el.summary.textContent = m.summary;
@@ -366,6 +414,7 @@ el.composer.addEventListener("submit", (e) => {
   if (!msg) return;
   el.msgInput.value = "";
   addBubble(msg, "you");
+  checkMemeMessage(msg);
   setTimeout(() => addBubble(botReply(msg)), 120);
 });
 
@@ -461,6 +510,7 @@ function renderOcean() {
   el.stats.append(stat("HP", o.hp));
   el.stats.append(stat("Pearls", o.pearls));
   el.stats.append(stat("Trust", state.trust));
+  checkFunnyNumbers([o.depth, o.botDepth]);
   el.status.textContent = o.hp <= 0 ? "You got caught by shadow fish." : o.depth >= 500 || o.botDepth >= 500 ? (o.depth >= o.botDepth ? "You win the depth race." : "Bot wins this dive.") : "Collect pearls and time dash bursts.";
 }
 
@@ -492,6 +542,7 @@ function renderEmotion() {
   el.stats.append(stat("Calm charges", e.calm));
   el.stats.append(stat("Journal uses", e.journal));
   el.stats.append(stat("Trust", state.trust));
+  checkFunnyNumbers([e.mask, e.hidden, e.botHidden]);
   el.status.textContent = e.hidden >= 95 ? "Your hidden stress broke through." : e.botHidden >= 95 ? "Bot cracked first—you stabilized better." : "Use Breathe/Journal strategically.";
 }
 
@@ -520,6 +571,7 @@ function renderDig() {
   el.stats.append(stat("Relics", d.relics));
   el.stats.append(stat("Boost active", d.boost > 0 ? "yes" : "no"));
   el.stats.append(stat("Trust", state.trust));
+  checkFunnyNumbers([d.layer, d.botLayer, d.relics]);
   el.status.textContent = `Find: ${d.finds[d.layer]} | Truth: ${truths.slice(0, d.truths).join(" / ") || "none"}`;
 }
 
@@ -557,6 +609,7 @@ function renderMirror() {
   el.stats.append(stat("Bot x", Math.floor(m.botX)));
   el.stats.append(stat("Phase charges", m.phase));
   el.stats.append(stat("Trust", state.trust));
+  checkFunnyNumbers([m.x, m.mirrorX, m.botX]);
   el.status.textContent = hitTrap ? "Mirror self hit a trap." : (m.x >= m.goal || m.botX >= m.goal) ? (m.x >= m.botX ? "You escaped both worlds." : "Bot escaped first.") : "Use Phase Shift to pass trap zones safely.";
 }
 
@@ -693,6 +746,7 @@ function renderTrident() {
   el.stats.append(stat("Aim power", t.dragging ? previewPower.toFixed(1) : "ready"));
   el.stats.append(stat("Wind", t.wind.toFixed(2)));
   el.stats.append(stat("Trust", state.trust));
+  checkFunnyNumbers([t.youHP, t.botHP, previewPower]);
 
   if (t.youHP <= 0) el.status.textContent = "Bot wins the duel.";
   else if (t.botHP <= 0) el.status.textContent = "You win the trident duel!";
