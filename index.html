@@ -59,7 +59,25 @@
       .ending { margin-top: 10px; border-radius: 12px; padding: 10px 12px; border: 1px solid rgba(220,201,248,.32); background: rgba(255,255,255,.04); }
 
       .remoteWrap { min-height: 700px; display: grid; grid-template-rows: auto 1fr; }
-      .remoteFrame { width: 100%; height: 100%; min-height: 640px; border: 0; background: #000; }
+      .remotePanel {
+        margin: 18px;
+        border: 1px solid rgba(220,201,248,.32);
+        border-radius: 14px;
+        background: rgba(255,255,255,.04);
+        padding: 16px;
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+      .linkBtn {
+        width: fit-content;
+        border: 1px solid rgba(220,201,248,.45);
+        border-radius: 10px;
+        background: rgba(173,130,235,.22);
+        color: #fff;
+        padding: 9px 12px;
+        cursor: pointer;
+      }
 
       @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } .left { border-right: none; border-bottom: 1px solid rgba(186,158,233,.2); } }
     </style>
@@ -137,7 +155,13 @@
 
       <section id="remoteGame" class="remoteWrap hidden">
         <div class="topbar"><small>Mode: External linked game</small><button id="backFromRemote">← Back to game menu</button></div>
-        <iframe class="remoteFrame" src="https://campfire-7ioxgkuxz-ahackvs-projects.vercel.app/" title="Campfire external game"></iframe>
+        <div class="remotePanel">
+          <h3 style="margin:0;">External Campfire game</h3>
+          <p style="margin:0;color:#daccf0;">This Vercel project blocks iframe embedding (`X-Frame-Options: deny`), so it can’t be shown inside this page.</p>
+          <p style="margin:0;color:#daccf0;">Use the button below to open it directly in a new tab.</p>
+          <button id="openRemoteTab" class="linkBtn">Open Campfire Vercel Project ↗</button>
+          <a href="https://campfire-7ioxgkuxz-ahackvs-projects.vercel.app/" target="_blank" rel="noopener noreferrer" style="color:#eed8ff;">Direct link: campfire-7ioxgkuxz-ahackvs-projects.vercel.app</a>
+        </div>
       </section>
     </main>
 

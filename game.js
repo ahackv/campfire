@@ -50,6 +50,7 @@ const el = {
   playRemoteBtn: document.getElementById("playRemoteBtn"),
   backFromLocal: document.getElementById("backFromLocal"),
   backFromRemote: document.getElementById("backFromRemote"),
+  openRemoteTab: document.getElementById("openRemoteTab"),
 
   youSalvage: document.getElementById("youSalvage"), youDepth: document.getElementById("youDepth"),
   youClick: document.getElementById("youClick"), youAuto: document.getElementById("youAuto"),
@@ -81,6 +82,13 @@ el.playLocalBtn.addEventListener("click", showLocal);
 el.playRemoteBtn.addEventListener("click", showRemote);
 el.backFromLocal.addEventListener("click", showMenu);
 el.backFromRemote.addEventListener("click", showMenu);
+el.openRemoteTab.addEventListener("click", () => {
+  const url = "https://campfire-7ioxgkuxz-ahackvs-projects.vercel.app/";
+  const popup = window.open(url, "_blank", "noopener,noreferrer");
+  if (!popup) {
+    window.location.href = url;
+  }
+});
 
 let audioCtx = null;
 function ensureAudio() { if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch { audioCtx = null; } } }
