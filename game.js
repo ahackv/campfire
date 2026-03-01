@@ -67,6 +67,46 @@ const FUNNY_NUMBERS = {
   1000000000: "1,000,000,000 IQ",
 };
 const seenFunnyNumbers = new Set();
+const AUDIO_ASSETS = {
+  victory: ["./assets/nothing-beats-a-jet2-holiday.mp3", "./assets/victory-theme.mp3"],
+  chaos: ["./assets/wait-wait-what-the-hell.mp3", "./assets/chaos-sfx.mp3"],
+  fail: ["./assets/spongebob-fail.mp3", "./assets/fail-sfx.mp3"],
+};
+const sfxCache = {};
+let sfxEnabled = true;
+
+function createSfx(candidates = []) {
+  for (const src of candidates) {
+    const audio = new Audio(src);
+    audio.preload = "auto";
+    audio.volume = 0.7;
+    audio.addEventListener("error", () => {}, { once: true });
+    if (typeof audio.load === "function") audio.load();
+    return audio;
+  }
+  return null;
+}
+
+function playSfx(name) {
+  if (!sfxEnabled) return;
+  if (!sfxCache[name]) sfxCache[name] = createSfx(AUDIO_ASSETS[name] || []);
+  const sound = sfxCache[name];
+  if (!sound) return;
+  try {
+    sound.currentTime = 0;
+    const p = sound.play();
+    if (p && typeof p.catch === "function") p.catch(() => {});
+  } catch (_err) {
+    // ignore browser autoplay / decode errors
+  }
+}
+
+function markEventOnce(key, soundName) {
+  if (state.firedEvents.has(key)) return false;
+  state.firedEvents.add(key);
+  playSfx(soundName);
+  return true;
+}
 
 function ensureAudioCtx() {
   if (!audioCtx) {
@@ -195,6 +235,7 @@ function checkMemeMessage(msg) {
   const trigger = MEME_TRIGGERS.find((m) => lower.includes(m.key));
   if (!trigger) return false;
   playMemeJingle(trigger.tones);
+  playSfx("chaos");
   setTimeout(() => addBubble(`Meme unlocked: ${trigger.label} 😂`), 80);
   return true;
 }
@@ -205,6 +246,7 @@ function checkFunnyNumbers(values = []) {
     if (!FUNNY_NUMBERS[rounded] || seenFunnyNumbers.has(rounded)) return;
     seenFunnyNumbers.add(rounded);
     playMemeJingle([493.88, 659.25, 783.99, 659.25]);
+    playSfx("chaos");
     addBubble(`Funny number ${rounded} hit: ${FUNNY_NUMBERS[rounded]} 😎`);
   });
 }
@@ -214,6 +256,7 @@ const state = {
   mode: null,
   running: false,
   trust: 0,
+  firedEvents: new Set(),
   ocean: { x: 370, y: 160, depth: 0, botDepth: 0, hp: 4, pearls: 0, dash: 0, hitCooldown: 0, enemies: [], pearlsMap: [] },
   emotion: { mask: 50, hidden: 20, botMask: 52, botHidden: 18, calm: 3, journal: 2 },
   dig: { layer: 0, botLayer: 0, truths: 0, boost: 0, finds: ["soil", "coins", "bones", "locket", "letter", "fear", "truth"], relics: 0 },
@@ -340,6 +383,7 @@ function setupMode(id) {
   state.mode = id;
   state.running = true;
   seenFunnyNumbers.clear();
+  state.firedEvents.clear();
   const m = MODES.find((x) => x.id === id);
   el.modeTitle.textContent = m.title;
   el.summary.textContent = m.summary;
@@ -584,6 +628,12 @@ function renderOcean() {
   el.stats.append(stat("Trust", state.trust));
   checkFunnyNumbers([o.depth, o.botDepth]);
   el.status.textContent = o.hp <= 0 ? "You got caught by shadow fish." : o.depth >= 500 || o.botDepth >= 500 ? (o.depth >= o.botDepth ? "You win the depth race." : "Bot wins this dive.") : "Collect pearls and time dash bursts.";
+
+  if (o.hp <= 0) markEventOnce("ocean-fail", "fail");
+  else if (o.depth >= 500 || o.botDepth >= 500) {
+    if (o.depth >= o.botDepth) markEventOnce("ocean-win", "victory");
+    else markEventOnce("ocean-lose", "fail");
+  }
 }
 
 function renderEmotion() {
@@ -616,6 +666,9 @@ function renderEmotion() {
   el.stats.append(stat("Trust", state.trust));
   checkFunnyNumbers([e.mask, e.hidden, e.botHidden]);
   el.status.textContent = e.hidden >= 95 ? "Your hidden stress broke through." : e.botHidden >= 95 ? "Bot cracked first—you stabilized better." : "Use Breathe/Journal strategically.";
+
+  if (e.hidden >= 95) markEventOnce("emotion-fail", "fail");
+  else if (e.botHidden >= 95) markEventOnce("emotion-win", "victory");
 }
 
 function renderDig() {
@@ -645,6 +698,13 @@ function renderDig() {
   el.stats.append(stat("Trust", state.trust));
   checkFunnyNumbers([d.layer, d.botLayer, d.relics]);
   el.status.textContent = `Find: ${d.finds[d.layer]} | Truth: ${truths.slice(0, d.truths).join(" / ") || "none"}`;
+
+  if (d.layer >= d.finds.length - 1) {
+    if (d.layer >= d.botLayer) markEventOnce("dig-win", "victory");
+    else markEventOnce("dig-lose", "fail");
+  } else if (d.botLayer >= d.finds.length - 1) {
+    markEventOnce("dig-lose", "fail");
+  }
 }
 
 function renderMirror() {
@@ -683,6 +743,12 @@ function renderMirror() {
   el.stats.append(stat("Trust", state.trust));
   checkFunnyNumbers([m.x, m.mirrorX, m.botX]);
   el.status.textContent = hitTrap ? "Mirror self hit a trap." : (m.x >= m.goal || m.botX >= m.goal) ? (m.x >= m.botX ? "You escaped both worlds." : "Bot escaped first.") : "Use Phase Shift to pass trap zones safely.";
+
+  if (hitTrap) markEventOnce("mirror-fail", "fail");
+  else if (m.x >= m.goal || m.botX >= m.goal) {
+    if (m.x >= m.botX) markEventOnce("mirror-win", "victory");
+    else markEventOnce("mirror-lose", "fail");
+  }
 }
 
 function renderTrident() {
@@ -823,6 +889,9 @@ function renderTrident() {
   if (t.youHP <= 0) el.status.textContent = "Bot wins the duel.";
   else if (t.botHP <= 0) el.status.textContent = "You win the trident duel!";
   else el.status.textContent = "Take turns throwing. Account for gravity + wind.";
+
+  if (t.youHP <= 0) markEventOnce("trident-fail", "fail");
+  else if (t.botHP <= 0) markEventOnce("trident-win", "victory");
 }
 
 function frame() {
