@@ -337,19 +337,31 @@ function stat(label, value) {
 
 function drawThumb(canvas, seed) {
   const c = canvas.getContext("2d");
-  c.fillStyle = ["#10283d", "#2d2347", "#3a2816", "#202b3d", "#2e1b29"][seed % 5];
+  const bg = ["#1aa8d8", "#1888c9", "#2568b5", "#3b63cf", "#2b93bf"][seed % 5];
+  c.fillStyle = bg;
   c.fillRect(0, 0, canvas.width, canvas.height);
-  for (let i = 0; i < 80; i++) {
-    c.fillStyle = i % 2 ? "#6f57a0" : "#3b2a59";
-    c.fillRect((i * 17) % canvas.width, 52 + (i % 14), 4, 2);
+  c.fillStyle = "rgba(255,255,255,0.18)";
+  for (let y = 8; y < 52; y += 12) c.fillRect(0, y + Math.sin(y + seed) * 2, canvas.width, 2);
+  for (let i = 0; i < 70; i++) {
+    c.fillStyle = i % 2 ? "rgba(255,170,210,0.45)" : "rgba(112,255,240,0.45)";
+    c.fillRect((i * 19) % canvas.width, 56 + (i % 15), 5, 3);
   }
-  c.fillStyle = "#f4d4be";
-  c.fillRect(14, 20, 18, 16);
-  c.fillStyle = "#191522";
-  c.fillRect(18, 25, 2, 2);
-  c.fillRect(25, 25, 2, 2);
-  c.fillStyle = "#86eaff";
-  c.fillRect(130, 20, 30, 30);
+  c.fillStyle = "#ffe17d";
+  c.beginPath();
+  c.ellipse(22, 28, 11, 7, 0, 0, Math.PI * 2);
+  c.fill();
+  c.beginPath();
+  c.moveTo(11, 28);
+  c.lineTo(3, 23);
+  c.lineTo(3, 33);
+  c.closePath();
+  c.fill();
+  c.fillStyle = "#133049";
+  c.fillRect(26, 26, 2, 2);
+  c.fillStyle = "#88f1ff";
+  c.fillRect(130, 16, 32, 32);
+  c.fillStyle = "#f0ff9c";
+  c.fillRect(140, 26, 4, 4);
 }
 
 function makeCards() {
@@ -536,40 +548,79 @@ el.composer.addEventListener("submit", (e) => {
 
 
 
-function drawSeaLifeDecor(timeSeed = 0) {
-  // fish
-  for (let i = 0; i < 7; i++) {
-    const x = (timeSeed * (0.6 + i * 0.07) + i * 120) % 820 - 40;
-    const y = 55 + (i % 5) * 52 + Math.sin(timeSeed * 0.01 + i) * 8;
-    ctx.fillStyle = i % 2 ? "rgba(126, 232, 255, 0.22)" : "rgba(255, 177, 129, 0.2)";
+function drawSeaBackdrop(seed = 0, palette = ["#49d2ff", "#1278bc", "#063a6f"]) {
+  const wave = seed * 0.01;
+  const grad = ctx.createLinearGradient(0, 0, 0, 340);
+  grad.addColorStop(0, palette[0]);
+  grad.addColorStop(0.58, palette[1]);
+  grad.addColorStop(1, palette[2]);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 760, 340);
+
+  ctx.fillStyle = "rgba(255,255,255,0.12)";
+  for (let i = 0; i < 6; i++) {
+    const y = 40 + i * 24 + Math.sin(wave + i) * 4;
+    ctx.fillRect(0, y, 760, 2);
+  }
+
+  ctx.fillStyle = "rgba(190, 245, 255, 0.35)";
+  for (let i = 0; i < 32; i++) {
+    const x = ((seed * (0.42 + i * 0.008)) + i * 29) % 800 - 20;
+    const y = 326 - ((seed * (0.25 + (i % 5) * 0.06) + i * 18) % 310);
+    const r = 1 + (i % 3);
     ctx.beginPath();
-    ctx.ellipse(x, y, 13, 7, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(x - 12, y);
-    ctx.lineTo(x - 20, y - 5);
-    ctx.lineTo(x - 20, y + 5);
-    ctx.closePath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  // starfish
-  for (let i = 0; i < 5; i++) {
-    const sx = 90 + i * 145 + Math.sin(timeSeed * 0.006 + i) * 6;
-    const sy = 300 + Math.cos(timeSeed * 0.005 + i) * 4;
+  ctx.fillStyle = "rgba(18, 66, 84, 0.52)";
+  ctx.fillRect(0, 280, 760, 60);
+  for (let i = 0; i < 12; i++) {
+    const bx = 24 + i * 64;
+    const bh = 10 + (i % 4) * 8;
+    ctx.fillStyle = i % 2 ? "rgba(255, 130, 170, 0.24)" : "rgba(105, 245, 232, 0.24)";
+    ctx.fillRect(bx, 280 - bh, 22, bh + 60);
+  }
+}
+
+function drawSeaLifeDecor(timeSeed = 0) {
+  for (let i = 0; i < 9; i++) {
+    const x = (timeSeed * (0.52 + i * 0.06) + i * 96) % 860 - 48;
+    const y = 66 + (i % 6) * 40 + Math.sin(timeSeed * 0.008 + i) * 10;
+    ctx.fillStyle = i % 3 === 0 ? "rgba(255, 214, 118, 0.55)" : i % 2 ? "rgba(126, 232, 255, 0.42)" : "rgba(255, 151, 194, 0.42)";
+    ctx.beginPath();
+    ctx.ellipse(x, y, 16, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x - 14, y);
+    ctx.lineTo(x - 24, y - 6);
+    ctx.lineTo(x - 24, y + 6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "rgba(11, 37, 60, 0.45)";
+    ctx.fillRect(x + 6, y - 2, 2, 2);
+  }
+
+  for (let i = 0; i < 6; i++) {
+    const sx = 60 + i * 130 + Math.sin(timeSeed * 0.006 + i) * 9;
+    const sy = 302 + Math.cos(timeSeed * 0.005 + i) * 5;
     ctx.save();
     ctx.translate(sx, sy);
-    ctx.rotate(timeSeed * 0.0008 + i);
-    ctx.fillStyle = "rgba(255, 170, 120, 0.28)";
+    ctx.rotate(timeSeed * 0.0009 + i);
+    ctx.fillStyle = "rgba(255, 173, 116, 0.44)";
     for (let a = 0; a < 5; a++) {
       ctx.rotate((Math.PI * 2) / 5);
       ctx.beginPath();
       ctx.moveTo(0, 0);
-      ctx.lineTo(0, -11);
+      ctx.lineTo(0, -12);
       ctx.lineTo(4, -4);
       ctx.closePath();
       ctx.fill();
     }
+    ctx.fillStyle = "rgba(255, 245, 230, 0.6)";
+    ctx.beginPath();
+    ctx.arc(0, 0, 2, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
   }
 }
@@ -589,11 +640,7 @@ function renderOcean() {
   const dark = Math.min(220, o.depth * 0.5);
   const g = Math.max(8, 85 - dark * 0.25);
   const b = Math.max(20, 145 - dark * 0.45);
-  const grad = ctx.createLinearGradient(0, 0, 0, 340);
-  grad.addColorStop(0, `rgb(10,${g + 20},${b + 20})`);
-  grad.addColorStop(1, `rgb(5,${g - 10},${b - 25})`);
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 760, 340);
+  drawSeaBackdrop(o.depth + o.botDepth, [`rgb(40,${g + 80},${b + 90})`, `rgb(15,${g + 25},${b + 25})`, `rgb(4,${g - 2},${b - 22})`]);
   drawSeaLifeDecor(o.depth + o.botDepth);
 
   if (o.hitCooldown > 0) o.hitCooldown -= 1;
@@ -601,8 +648,16 @@ function renderOcean() {
   o.enemies.forEach((en) => {
     en.x += en.vx;
     if (en.x < 0 || en.x > 760) en.vx *= -1;
-    ctx.fillStyle = "#b32145";
-    ctx.fillRect(en.x, en.y, 16, 8);
+    ctx.fillStyle = "#ff5e8a";
+    ctx.beginPath();
+    ctx.ellipse(en.x, en.y, 10, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(en.x - 8, en.y);
+    ctx.lineTo(en.x - 14, en.y - 4);
+    ctx.lineTo(en.x - 14, en.y + 4);
+    ctx.closePath();
+    ctx.fill();
     if (Math.hypot(en.x - o.x, en.y - o.y) < 14 && o.hitCooldown <= 0) {
       o.hp = Math.max(0, o.hp - 1);
       o.hitCooldown = 28;
@@ -611,14 +666,26 @@ function renderOcean() {
   o.pearlsMap.forEach((p) => {
     if (!p.taken) {
       ctx.fillStyle = "#7de8ff";
-      ctx.fillRect(p.x, p.y, 6, 6);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.65)";
+      ctx.fillRect(p.x + 1, p.y - 2, 2, 2);
       if (Math.hypot(p.x - o.x, p.y - o.y) < 12) { p.taken = true; o.pearls += 1; }
     }
   });
   if (o.pearlsMap.every((p) => p.taken)) spawnOceanEntities();
 
   ctx.fillStyle = o.hitCooldown > 0 ? "#ff9f9f" : "#f6d86c";
-  ctx.fillRect(o.x, o.y, 12, 12);
+  ctx.beginPath();
+  ctx.ellipse(o.x, o.y, 10, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(o.x - 9, o.y);
+  ctx.lineTo(o.x - 16, o.y - 5);
+  ctx.lineTo(o.x - 16, o.y + 5);
+  ctx.closePath();
+  ctx.fill();
 
   el.stats.innerHTML = "";
   el.stats.append(stat("Your depth", Math.floor(o.depth)));
@@ -644,11 +711,7 @@ function renderEmotion() {
   if (Math.random() < 0.02) e.botHidden = Math.max(0, e.botHidden - 6);
   if (Math.random() < 0.01 && e.calm < 3) e.calm += 1;
 
-  const grad = ctx.createRadialGradient(380, 170, 30, 380, 170, 360);
-  grad.addColorStop(0, "#2d2247");
-  grad.addColorStop(1, "#130f21");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 760, 340);
+  drawSeaBackdrop(e.hidden * 4 + e.botHidden * 3, ["#4dc9ff", "#2a73cf", "#352b5f"]);
   drawSeaLifeDecor(e.hidden * 3 + e.botHidden * 2);
   ctx.fillStyle = "#f4d4be";
   ctx.fillRect(170, 90, 120, 120);
@@ -676,11 +739,7 @@ function renderDig() {
   if (Math.random() < 0.025) d.botLayer = Math.min(d.finds.length - 1, d.botLayer + 1);
   if (d.boost > 0) d.boost -= 1;
 
-  const grad = ctx.createLinearGradient(0, 0, 0, 340);
-  grad.addColorStop(0, "#4a3020");
-  grad.addColorStop(1, "#24160e");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 760, 340);
+  drawSeaBackdrop(d.layer * 140 + d.relics * 24, ["#3fb6d6", "#1f5f9d", "#3d2a4a"]);
   drawSeaLifeDecor(d.layer * 120 + d.relics * 20);
 
   for (let i = 0; i < d.finds.length; i++) {
@@ -719,9 +778,10 @@ function renderMirror() {
   m.x = Math.max(10, Math.min(730, m.x));
   m.mirrorX = Math.max(10, Math.min(730, m.mirrorX));
 
-  ctx.fillStyle = "#1f2640";
+  drawSeaBackdrop(m.mirrorNoise * 115, ["#54d9ff", "#277ad0", "#2f2555"]);
+  ctx.fillStyle = "rgba(31, 38, 64, 0.72)";
   ctx.fillRect(0, 0, 760, 170);
-  ctx.fillStyle = "#2f1f34";
+  ctx.fillStyle = "rgba(47, 31, 52, 0.72)";
   ctx.fillRect(0, 170, 760, 170);
   drawSeaLifeDecor(m.mirrorNoise * 100);
 
@@ -755,11 +815,7 @@ function renderTrident() {
   const t = state.trident;
 
   // cinematic background
-  const grad = ctx.createLinearGradient(0, 0, 0, 340);
-  grad.addColorStop(0, "#2f1830");
-  grad.addColorStop(1, "#1c0f1d");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 760, 340);
+  drawSeaBackdrop((3 - t.youHP + 3 - t.botHP) * 180 + (t.cooldown || 0), ["#64dbff", "#356dc0", "#38234e"]);
   drawSeaLifeDecor((3 - t.youHP + 3 - t.botHP) * 180 + (t.cooldown || 0));
 
   ctx.fillStyle = "#4d2b2f";
@@ -774,8 +830,16 @@ function renderTrident() {
   // players
   ctx.fillStyle = "#7de8ff";
   ctx.fillRect(70, 220, 26, 40);
+  ctx.fillStyle = "#ffe27e";
+  ctx.beginPath();
+  ctx.arc(83, 215, 10, 0, Math.PI * 2);
+  ctx.fill();
   ctx.fillStyle = "#ff9db5";
   ctx.fillRect(665, 220, 26, 40);
+  ctx.fillStyle = "#9cf9a8";
+  ctx.beginPath();
+  ctx.arc(678, 215, 10, 0, Math.PI * 2);
+  ctx.fill();
 
   // death animation overlays
   if (t.deathAnim) {
