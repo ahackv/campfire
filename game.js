@@ -31,17 +31,15 @@ const keys = new Set();
 
 let audioCtx = null;
 let musicOn = false;
-let musicTimer = null;
-let bassTimer = null;
-const progression = [220, 174.61, 196, 164.81, 246.94, 196, 220, 174.61];
-let progIndex = 0;
+let memeRadioTimer = null;
+let memeLoopIndex = 0;
 
 const MEME_TRIGGERS = [
   { key: "jet 2 holiday", label: "Jet 2 Holiday", tones: [523.25, 659.25, 783.99] },
   { key: "wait wait wait", label: "Wait Wait Wait", tones: [349.23, 349.23, 293.66, 261.63] },
   { key: "wide putin", label: "Wide Putin", tones: [246.94, 293.66, 369.99] },
   { key: "pongbib fail", label: "Pongbib Fail", tones: [392, 329.63, 261.63] },
-  { key: "pongbib fail", label: "Pongbib Fail", tones: [392, 329.63, 261.63] },
+  { key: "ponqbib fail", label: "Pongbib Fail", tones: [392, 329.63, 261.63] },
   { key: "plh", label: "PLH", tones: [440, 554.37, 440, 659.25] },
   { key: "1,000,000,000 iq", label: "1,000,000,000 IQ", tones: [261.63, 329.63, 392, 523.25, 783.99] },
   { key: "1000000000 iq", label: "1,000,000,000 IQ", tones: [261.63, 329.63, 392, 523.25, 783.99] },
@@ -81,32 +79,31 @@ function playTone(freq, duration = 0.18, type = "triangle", volume = 0.03) {
   osc.stop(ctxA.currentTime + duration);
 }
 
+function playCurrentMemeLoop() {
+  const meme = MEME_TRIGGERS[memeLoopIndex % MEME_TRIGGERS.length];
+  playMemeJingle(meme.tones);
+  el.botMood.textContent = `Now playing: ${meme.label}`;
+  memeLoopIndex += 1;
+}
+
 function startMusic() {
   if (musicOn) return;
+  const ctxA = ensureAudioCtx();
+  if (!ctxA) return;
+  if (ctxA.state === "suspended") ctxA.resume();
+
   musicOn = true;
-  el.musicBtn.textContent = "🎵 Music: On";
+  el.musicBtn.textContent = "🎵 Meme Radio: On";
 
-  musicTimer = setInterval(() => {
-    const root = progression[progIndex % progression.length];
-    playTone(root, 0.18, "triangle", 0.028);
-    playTone(root * 1.5, 0.14, "sine", 0.018);
-    if (Math.random() < 0.45) playTone(root * 2, 0.08, "square", 0.012);
-    progIndex += 1;
-  }, 240);
-
-  bassTimer = setInterval(() => {
-    const root = progression[(progIndex + 7) % progression.length] / 2;
-    playTone(root, 0.22, "sawtooth", 0.018);
-  }, 480);
+  playCurrentMemeLoop();
+  memeRadioTimer = setInterval(playCurrentMemeLoop, 2600);
 }
 
 function stopMusic() {
   musicOn = false;
-  el.musicBtn.textContent = "🎵 Music: Off";
-  if (musicTimer) clearInterval(musicTimer);
-  if (bassTimer) clearInterval(bassTimer);
-  musicTimer = null;
-  bassTimer = null;
+  el.musicBtn.textContent = "🎵 Meme Radio: Off";
+  if (memeRadioTimer) clearInterval(memeRadioTimer);
+  memeRadioTimer = null;
 }
 
 function toggleMusic() {
@@ -319,10 +316,12 @@ function startMode(id) {
   el.menu.classList.add("hidden");
   el.gameView.classList.remove("hidden");
   setupMode(id);
+  startMusic();
 }
 function showMenu() {
   state.running = false;
   state.mode = null;
+  stopMusic();
   el.menu.classList.remove("hidden");
   el.gameView.classList.add("hidden");
 }
