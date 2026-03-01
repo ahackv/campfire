@@ -478,6 +478,7 @@ function createOnlyUpPlatforms() {
     w: 170,
     h: 14,
     bob: 0,
+    bobAmp: 0,
     moving: false,
     vx: 0,
   });
@@ -486,13 +487,14 @@ function createOnlyUpPlatforms() {
   for (let i = 0; i < 80; i++) {
     const width = 72 + Math.random() * 88;
     const x = 18 + Math.random() * (742 - width);
-    const moving = i % 3 === 0; // more moving platforms for fun
+    const moving = i > 12 && i % 3 === 0; // start calm, moving platforms appear later
     platforms.push({
       x,
       y,
       w: width,
       h: 12,
       bob: Math.random() * Math.PI * 2,
+      bobAmp: 2,
       moving,
       vx: moving ? (Math.random() > 0.5 ? 1 : -1) * (0.55 + Math.random() * 0.95) : 0,
     });
@@ -567,7 +569,7 @@ function setupMode(id) {
     const platforms = createOnlyUpPlatforms();
     state.up = {
       x: 380,
-      y: 270,
+      y: 268,
       vx: 0,
       vy: 0,
       cameraY: 0,
@@ -578,8 +580,8 @@ function setupMode(id) {
       boosts: 2,
       over: false,
       jumpBuffer: 0,
-      coyote: 0,
-      grounded: false,
+      coyote: 8,
+      grounded: true,
       springHits: 0,
       platforms,
       pearlsMap: createOnlyUpPearls(platforms),
@@ -708,13 +710,13 @@ function beginModeTransition(id) {
     state.transition.active = false;
     setupMode(id);
     state.running = true;
-    startMusic();
   }, 1600);
 }
 
 function startMode(id) {
   el.menu.classList.add("hidden");
   el.gameView.classList.remove("hidden");
+  startMusic();
   beginModeTransition(id);
 }
 function showMenu() {
@@ -1039,7 +1041,7 @@ function renderOnlyUp() {
         p.x += p.vx;
         if (p.x < 0 || p.x + p.w > 760) p.vx *= -1;
       }
-      const py = p.y + Math.sin(Date.now() * 0.002 + p.bob) * 2;
+      const py = p.y + Math.sin(Date.now() * 0.002 + p.bob) * (p.bobAmp ?? 2);
       const landed = prevY + 12 <= py && u.y + 12 >= py && u.x > p.x - 10 && u.x < p.x + p.w + 10 && u.vy >= 0;
       if (landed) {
         const spring = idx % 6 === 0;
@@ -1073,10 +1075,10 @@ function renderOnlyUp() {
 
     const heightNow = Math.max(0, 300 - u.y);
     u.bestHeight = Math.max(u.bestHeight, heightNow);
-    const camTarget = Math.max(0, u.bestHeight - 120);
-    u.cameraY += (camTarget - u.cameraY) * 0.15;
+    const camTarget = Math.max(0, Math.max(u.bestHeight - 120, 170 - u.y));
+    u.cameraY += (camTarget - u.cameraY) * 0.18;
 
-    if (u.y > u.cameraY + 390) {
+    if (u.y + u.cameraY > 390) {
       u.over = true;
       markEventOnce("up-fail", "fail");
     }
@@ -1088,10 +1090,10 @@ function renderOnlyUp() {
   }
 
   ctx.save();
-  ctx.translate(0, -u.cameraY);
+  ctx.translate(0, u.cameraY);
 
   u.platforms.forEach((p, idx) => {
-    const py = p.y + Math.sin(Date.now() * 0.002 + p.bob) * 2;
+    const py = p.y + Math.sin(Date.now() * 0.002 + p.bob) * (p.bobAmp ?? 2);
     const spring = idx % 6 === 0;
     ctx.fillStyle = spring ? "#ffe17a" : (idx % 2 ? "#77ffd2" : "#ffc8e9");
     ctx.fillRect(p.x, py, p.w, p.h);
@@ -1130,7 +1132,7 @@ function renderOnlyUp() {
   el.stats.append(stat("Bubble Boost", u.boosts));
   el.stats.append(stat("Spring Hits", u.springHits));
 
-  if (!u.over) el.status.textContent = "Climb up fast! Moving platforms shift your route and yellow springs launch you higher.";
+  if (!u.over) el.status.textContent = "Climb up fast! Camera now follows you, moving platforms kick in later, and yellow springs launch you higher.";
   else if (u.bestHeight >= 1700) el.status.textContent = "You reached the sky reef! Massive win.";
   else el.status.textContent = "Splash down! Try chaining springs and boosts for a crazy run.";
 }
