@@ -13,6 +13,7 @@ const el = {
   gameView: document.getElementById("gameView"),
   backBtn: document.getElementById("backBtn"),
   musicBtn: document.getElementById("musicBtn"),
+  fullBtn: document.getElementById("fullBtn"),
   modeTitle: document.getElementById("modeTitle"),
   summary: document.getElementById("summary"),
   stats: document.getElementById("stats"),
@@ -37,6 +38,8 @@ let memeLoopIndex = 0;
 let currentTrack = null;
 let currentStep = 0;
 let nextStepTime = 0;
+let musicMasterGain = null;
+let transitionTimer = null;
 
 const MEME_TRIGGERS = [
   { key: "jet 2 holiday", label: "Jet 2 Holiday", tones: [523.25, 659.25, 783.99] },
@@ -113,6 +116,9 @@ function ensureAudioCtx() {
     const Ctx = window.AudioContext || window.webkitAudioContext;
     if (!Ctx) return null;
     audioCtx = new Ctx();
+    musicMasterGain = audioCtx.createGain();
+    musicMasterGain.gain.value = 0.22;
+    musicMasterGain.connect(audioCtx.destination);
   }
   return audioCtx;
 }
@@ -129,7 +135,7 @@ function playToneAt(freq, startAt, duration = 0.18, type = "triangle", volume = 
   gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume), startAt + 0.01);
   gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
   osc.connect(gain);
-  gain.connect(ctxA.destination);
+  gain.connect(musicMasterGain || ctxA.destination);
   osc.start(startAt);
   osc.stop(startAt + duration + 0.02);
 }
@@ -198,13 +204,13 @@ function scheduleStep() {
   const padNote = currentTrack.pad[step];
   const pulseNote = currentTrack.pulse[step];
 
-  if (leadNote) playToneAt(leadNote, t, stepDuration * 0.9, "triangle", 0.018);
-  if (bassNote) playToneAt(bassNote, t, stepDuration * 0.86, "sine", 0.03);
+  if (leadNote) playToneAt(leadNote, t, stepDuration * 0.9, "triangle", 0.03);
+  if (bassNote) playToneAt(bassNote, t, stepDuration * 0.86, "sine", 0.05);
   if (padNote) {
-    playToneAt(padNote, t, stepDuration * 2.6, "sine", 0.01);
-    playToneAt(padNote * 1.5, t, stepDuration * 2.2, "sine", 0.006);
+    playToneAt(padNote, t, stepDuration * 2.6, "sine", 0.015);
+    playToneAt(padNote * 1.5, t, stepDuration * 2.2, "sine", 0.01);
   }
-  if (pulseNote && getMusicEnergy() > 0.35) playToneAt(pulseNote, t, stepDuration * 0.38, "square", 0.01);
+  if (pulseNote && getMusicEnergy() > 0.35) playToneAt(pulseNote, t, stepDuration * 0.38, "square", 0.014);
 
   currentStep += 1;
   nextStepTime += stepDuration;
@@ -244,6 +250,21 @@ function stopMusic() {
 function toggleMusic() {
   if (musicOn) stopMusic();
   else startMusic();
+}
+
+function unlockAudioAndMaybeStart() {
+  const ctxA = ensureAudioCtx();
+  if (!ctxA) return;
+  if (ctxA.state === "suspended") ctxA.resume();
+  if (state.running && !musicOn) startMusic();
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
 }
 
 function playMemeJingle(tones) {
@@ -303,6 +324,11 @@ const state = {
     openness: 0,
     over: false,
     lastHint: "",
+  },
+  transition: {
+    active: false,
+    modeId: null,
+    startedAt: 0,
   },
 };
 
@@ -480,15 +506,132 @@ function setupMode(id) {
   }
 }
 
+
+function drawModeTransition() {
+  const tr = state.transition;
+  if (!tr.active) return;
+  const elapsed = Date.now() - tr.startedAt;
+  const pulse = 1 + Math.sin(elapsed * 0.008) * 0.04;
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, 760, 340);
+
+  // face circle
+  ctx.save();
+  ctx.translate(380, 170);
+  ctx.scale(pulse, pulse);
+  ctx.fillStyle = "#ffe066";
+  ctx.strokeStyle = "#1f2d3d";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(0, 0, 118, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // left eye chessboard
+  for (let i = 0; i < 4; i++) {
+    for (let j = 0; j < 4; j++) {
+      ctx.fillStyle = (i + j) % 2 === 0 ? "#111" : "#fff";
+      ctx.fillRect(-62 + j * 10, -40 + i * 10, 10, 10);
+      ctx.strokeStyle = "#222";
+      ctx.strokeRect(-62 + j * 10, -40 + i * 10, 10, 10);
+    }
+  }
+
+  // right eye nested squares
+  const eyeColors = ["#ff4d4d", "#44c060", "#ffdf4d", "#8b5a2b", "#111"];
+  const eyeSizes = [34, 26, 18, 12, 6];
+  eyeSizes.forEach((sz, idx) => {
+    ctx.fillStyle = eyeColors[idx];
+    ctx.fillRect(34 - sz / 2, -34 - sz / 2, sz, sz);
+  });
+
+  // nose star
+  ctx.fillStyle = "#2389ff";
+  ctx.strokeStyle = "#ff2a2a";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const a1 = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
+    const a2 = a1 + Math.PI / 5;
+    const r1 = 23;
+    const r2 = 10;
+    const x1 = Math.cos(a1) * r1;
+    const y1 = Math.sin(a1) * r1 + 5;
+    const x2 = Math.cos(a2) * r2;
+    const y2 = Math.sin(a2) * r2 + 5;
+    if (i === 0) ctx.moveTo(x1, y1);
+    else ctx.lineTo(x1, y1);
+    ctx.lineTo(x2, y2);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // mouth rainbow arc + cheeks
+  const mouthColors = ["#ffd93d", "#ff4d6d", "#a56bff", "#3fa9ff"];
+  mouthColors.forEach((c, i) => {
+    ctx.strokeStyle = c;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(0, 20, 42 + i * 2, 0.2, Math.PI - 0.2);
+    ctx.stroke();
+  });
+  ctx.fillStyle = "#ff4b5c";
+  ctx.beginPath(); ctx.arc(-65, 20, 10, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(65, 20, 10, 0, Math.PI * 2); ctx.fill();
+
+  // hair shapes
+  ctx.strokeStyle = "#2a8f2a";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-42, -108); ctx.lineTo(-70, -138); ctx.lineTo(-14, -138); ctx.closePath();
+  ctx.stroke();
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const a = (Math.PI * 2 * i) / 6;
+    const x = 44 + Math.cos(a) * 20;
+    const y = -128 + Math.sin(a) * 20;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.stroke();
+
+  ctx.restore();
+
+  const mode = MODES.find((m) => m.id === tr.modeId);
+  ctx.fillStyle = "#123d73";
+  ctx.font = "bold 28px Inter, system-ui";
+  ctx.fillText("Diving into next game...", 220, 300);
+  ctx.font = "18px Inter, system-ui";
+  ctx.fillText(mode ? mode.title : "Next mode", 305, 326);
+}
+
+function beginModeTransition(id) {
+  state.transition.active = true;
+  state.transition.modeId = id;
+  state.transition.startedAt = Date.now();
+  state.running = false;
+  if (transitionTimer) clearTimeout(transitionTimer);
+  transitionTimer = setTimeout(() => {
+    state.transition.active = false;
+    setupMode(id);
+    state.running = true;
+    startMusic();
+  }, 1600);
+}
+
 function startMode(id) {
   el.menu.classList.add("hidden");
   el.gameView.classList.remove("hidden");
-  setupMode(id);
-  startMusic();
+  beginModeTransition(id);
 }
 function showMenu() {
   state.running = false;
   state.mode = null;
+  state.transition.active = false;
+  if (transitionTimer) clearTimeout(transitionTimer);
+  transitionTimer = null;
   stopMusic();
   el.menu.classList.remove("hidden");
   el.gameView.classList.add("hidden");
@@ -539,6 +682,8 @@ function spawnBlood(x, y, amount = 18) {
 
 el.backBtn.addEventListener("click", showMenu);
 el.musicBtn.addEventListener("click", toggleMusic);
+el.fullBtn?.addEventListener("click", toggleFullscreen);
+window.addEventListener("pointerdown", unlockAudioAndMaybeStart, { passive: true });
 window.addEventListener("keydown", (e) => keys.add(e.key.toLowerCase()));
 window.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
 
@@ -1096,7 +1241,9 @@ function renderTrident() {
 }
 
 function frame() {
-  if (state.running) {
+  if (state.transition.active) {
+    drawModeTransition();
+  } else if (state.running) {
     if (state.mode === "ocean") renderOcean();
     if (state.mode === "emotion") renderEmotion();
     if (state.mode === "dig") renderDig();
