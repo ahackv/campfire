@@ -3,7 +3,7 @@ const MODES = [
   { id: "emotion", title: "😃 Emotion Mask", summary: "Balance visible calm against hidden pressure." },
   { id: "dig", title: "⛏️ Beneath the Dirt", summary: "Dig layers, collect relics, and surface truths." },
   { id: "mirror", title: "🪞 Mirror World", summary: "Move in dual worlds and avoid hidden traps." },
-  { id: "trident", title: "🔱 Trident Duel", summary: "Turn-based physics throws. Arc your shot to hit the bot." },
+  { id: "trident", title: "🔱 Trident Duel", summary: "Turn-based physics throws with wind, blood splashes, and death animations." },
 ];
 
 const el = {
@@ -45,6 +45,8 @@ const state = {
     projectile: null,
     wind: 0,
     cooldown: 0,
+    blood: [],
+    deathAnim: null,
   },
 };
 
@@ -55,7 +57,8 @@ function drawFace() {
   for (let y = 7; y < 26; y++) for (let x = 7; x < 26; x++) { faceCtx.fillStyle = "#f4d4be"; faceCtx.fillRect(x, y, 1, 1); }
   faceCtx.fillStyle = "#181421"; faceCtx.fillRect(11, 14, 2, 2); faceCtx.fillRect(19, 14, 2, 2);
   faceCtx.fillStyle = "#7a3042"; if (mouthOpen) faceCtx.fillRect(13, 22, 6, 2); else faceCtx.fillRect(13, 22, 6, 1);
-  faceCtx.fillStyle = "#a286d1"; for (let i = 0; i < 32; i++) { faceCtx.fillRect(i, 0, 1, 1); faceCtx.fillRect(i, 31, 1, 1); faceCtx.fillRect(0, i, 1, 1); faceCtx.fillRect(31, i, 1, 1); }
+  faceCtx.fillStyle = "#a286d1";
+  for (let i = 0; i < 32; i++) { faceCtx.fillRect(i, 0, 1, 1); faceCtx.fillRect(i, 31, 1, 1); faceCtx.fillRect(0, i, 1, 1); faceCtx.fillRect(31, i, 1, 1); }
 }
 function animateFace(text) {
   el.botMood.textContent = `Bot: ${text}`;
@@ -110,9 +113,9 @@ function drawThumb(canvas, seed) {
   const c = canvas.getContext("2d");
   c.fillStyle = ["#10283d", "#2d2347", "#3a2816", "#202b3d", "#2e1b29"][seed % 5];
   c.fillRect(0, 0, canvas.width, canvas.height);
-  for (let i = 0; i < 70; i++) {
+  for (let i = 0; i < 80; i++) {
     c.fillStyle = i % 2 ? "#6f57a0" : "#3b2a59";
-    c.fillRect((i * 17) % canvas.width, 55 + (i % 12), 4, 2);
+    c.fillRect((i * 17) % canvas.width, 52 + (i % 14), 4, 2);
   }
   c.fillStyle = "#f4d4be";
   c.fillRect(14, 20, 18, 16);
@@ -146,7 +149,7 @@ function spawnOceanEntities() {
   state.ocean.enemies = [];
   state.ocean.pearlsMap = [];
   for (let i = 0; i < 8; i++) state.ocean.enemies.push({ x: Math.random() * 730 + 10, y: Math.random() * 320 + 8, vx: (Math.random() - 0.5) * 2.4 });
-  for (let i = 0; i < 7; i++) state.ocean.pearlsMap.push({ x: Math.random() * 720 + 20, y: Math.random() * 300 + 20, taken: false });
+  for (let i = 0; i < 8; i++) state.ocean.pearlsMap.push({ x: Math.random() * 720 + 20, y: Math.random() * 300 + 20, taken: false });
 }
 
 function setupMode(id) {
@@ -156,7 +159,6 @@ function setupMode(id) {
   const m = MODES.find((x) => x.id === id);
   el.modeTitle.textContent = m.title;
   el.summary.textContent = m.summary;
-  el.canvas.classList.remove("hidden");
 
   if (id === "ocean") {
     state.ocean = { x: 370, y: 160, depth: 0, botDepth: 0, hp: 4, pearls: 0, dash: 0, enemies: [], pearlsMap: [] };
@@ -165,7 +167,6 @@ function setupMode(id) {
     document.getElementById("dashBtn").onclick = () => { if (state.ocean.dash <= 0) state.ocean.dash = 80; };
     addBubble("Race me to depth 500, collect pearls, and dodge shadow fish.");
   }
-
   if (id === "emotion") {
     state.emotion = { mask: 50, hidden: 20, botMask: 52, botHidden: 18, calm: 3, journal: 2 };
     el.controls.innerHTML = '<button id="maskBtn">Mask +</button><button id="breatheBtn">Breathe</button><button id="journalBtn">Journal</button>';
@@ -174,7 +175,6 @@ function setupMode(id) {
     document.getElementById("journalBtn").onclick = () => { if (state.emotion.journal > 0) { state.emotion.journal -= 1; state.emotion.hidden = Math.max(0, state.emotion.hidden - 18); state.trust += 1; } };
     addBubble("Keep the mask stable, but don't ignore hidden pressure.");
   }
-
   if (id === "dig") {
     state.dig = { layer: 0, botLayer: 0, truths: 0, boost: 0, finds: ["soil", "coins", "bones", "locket", "letter", "fear", "truth"], relics: 0 };
     el.controls.innerHTML = '<button id="digBtn">Dig</button><button id="truthBtn">Truth</button><button id="boostBtn">Drill Boost</button>';
@@ -188,16 +188,14 @@ function setupMode(id) {
     document.getElementById("boostBtn").onclick = () => { state.dig.boost = 220; };
     addBubble("Dig race started. Chain relic finds before the bot does.");
   }
-
   if (id === "mirror") {
     state.mirror = { x: 70, mirrorX: 70, botX: 75, goal: 700, phase: 2, phaseTimer: 0, traps: [220, 340, 510], mirrorNoise: 0 };
     el.controls.innerHTML = '<button id="phaseBtn">Phase Shift</button><span class="stat">Move: arrows / WASD</span>';
     document.getElementById("phaseBtn").onclick = () => { if (state.mirror.phase > 0) { state.mirror.phase -= 1; state.mirror.phaseTimer = 140; } };
     addBubble("Watch both worlds. Phase Shift lets you ghost through traps briefly.");
   }
-
   if (id === "trident") {
-    state.trident = { youHP: 3, botHP: 3, turn: "you", aimAngle: 42, aimPower: 15, projectile: null, wind: (Math.random() - 0.5) * 0.12, cooldown: 0 };
+    state.trident = { youHP: 3, botHP: 3, turn: "you", aimAngle: 42, aimPower: 15, projectile: null, wind: (Math.random() - 0.5) * 0.12, cooldown: 0, blood: [], deathAnim: null };
     el.controls.innerHTML = '<button id="angleUp">Angle +</button><button id="angleDown">Angle -</button><button id="powerUp">Power +</button><button id="powerDown">Power -</button><button id="throwBtn">Throw Trident</button>';
     document.getElementById("angleUp").onclick = () => state.trident.aimAngle = Math.min(80, state.trident.aimAngle + 2);
     document.getElementById("angleDown").onclick = () => state.trident.aimAngle = Math.max(8, state.trident.aimAngle - 2);
@@ -208,50 +206,43 @@ function setupMode(id) {
   }
 }
 
+function startMode(id) {
+  el.menu.classList.add("hidden");
+  el.gameView.classList.remove("hidden");
+  setupMode(id);
+}
+function showMenu() {
+  state.running = false;
+  state.mode = null;
+  el.menu.classList.remove("hidden");
+  el.gameView.classList.add("hidden");
+}
+
 function tryThrowTrident() {
   const t = state.trident;
   if (state.mode !== "trident" || t.projectile || t.turn !== "you" || t.youHP <= 0 || t.botHP <= 0) return;
   const rad = (t.aimAngle * Math.PI) / 180;
-  t.projectile = {
-    x: 95,
-    y: 240,
-    vx: Math.cos(rad) * t.aimPower * 0.55,
-    vy: -Math.sin(rad) * t.aimPower * 0.55,
-    owner: "you",
-  };
+  t.projectile = { x: 95, y: 240, vx: Math.cos(rad) * t.aimPower * 0.55, vy: -Math.sin(rad) * t.aimPower * 0.55, owner: "you", trail: [] };
   t.turn = "bot";
   addBubble(`You throw at ${t.aimAngle}° / power ${t.aimPower}.`, "you");
 }
-
 function botThrow() {
   const t = state.trident;
   if (t.projectile || t.turn !== "bot" || t.youHP <= 0 || t.botHP <= 0 || t.cooldown > 0) return;
   const baseAngle = 180 - (34 + Math.random() * 20);
   const rad = (baseAngle * Math.PI) / 180;
   const power = 12 + Math.random() * 10;
-  t.projectile = {
-    x: 665,
-    y: 240,
-    vx: Math.cos(rad) * power * 0.55,
-    vy: -Math.sin(rad) * power * 0.55,
-    owner: "bot",
-  };
+  t.projectile = { x: 665, y: 240, vx: Math.cos(rad) * power * 0.55, vy: -Math.sin(rad) * power * 0.55, owner: "bot", trail: [] };
   t.turn = "you";
   t.cooldown = 55;
   addBubble("Bot throws a trident.");
 }
 
-function startMode(id) {
-  el.menu.classList.add("hidden");
-  el.gameView.classList.remove("hidden");
-  setupMode(id);
-}
-
-function showMenu() {
-  state.running = false;
-  state.mode = null;
-  el.menu.classList.remove("hidden");
-  el.gameView.classList.add("hidden");
+function spawnBlood(x, y, amount = 18) {
+  const arr = state.trident.blood;
+  for (let i = 0; i < amount; i++) {
+    arr.push({ x, y, vx: (Math.random() - 0.5) * 4, vy: -Math.random() * 3 - 0.4, life: 45 + Math.random() * 40, r: 1 + Math.random() * 2.5 });
+  }
 }
 
 el.backBtn.addEventListener("click", showMenu);
@@ -277,12 +268,15 @@ function renderOcean() {
   if (keys.has("arrowdown") || keys.has("s")) { o.y += speed * 0.65; o.depth += 1; }
   o.x = Math.max(8, Math.min(740, o.x));
   o.y = Math.max(8, Math.min(320, o.y));
-
   o.botDepth += 0.7 + Math.random() * 1.15;
+
   const dark = Math.min(220, o.depth * 0.5);
   const g = Math.max(8, 85 - dark * 0.25);
   const b = Math.max(20, 145 - dark * 0.45);
-  ctx.fillStyle = `rgb(10, ${g}, ${b})`;
+  const grad = ctx.createLinearGradient(0, 0, 0, 340);
+  grad.addColorStop(0, `rgb(10,${g + 20},${b + 20})`);
+  grad.addColorStop(1, `rgb(5,${g - 10},${b - 25})`);
+  ctx.fillStyle = grad;
   ctx.fillRect(0, 0, 760, 340);
 
   o.enemies.forEach((en) => {
@@ -292,7 +286,6 @@ function renderOcean() {
     ctx.fillRect(en.x, en.y, 16, 8);
     if (Math.hypot(en.x - o.x, en.y - o.y) < 14 && Math.random() < 0.02) o.hp = Math.max(0, o.hp - 1);
   });
-
   o.pearlsMap.forEach((p) => {
     if (!p.taken) {
       ctx.fillStyle = "#7de8ff";
@@ -311,10 +304,7 @@ function renderOcean() {
   el.stats.append(stat("HP", o.hp));
   el.stats.append(stat("Pearls", o.pearls));
   el.stats.append(stat("Trust", state.trust));
-
-  if (o.hp <= 0) el.status.textContent = "You got caught by shadow fish.";
-  else if (o.depth >= 500 || o.botDepth >= 500) el.status.textContent = o.depth >= o.botDepth ? "You win the depth race." : "Bot wins this dive.";
-  else el.status.textContent = "Collect pearls for score and use Dash Burst to dodge.";
+  el.status.textContent = o.hp <= 0 ? "You got caught by shadow fish." : o.depth >= 500 || o.botDepth >= 500 ? (o.depth >= o.botDepth ? "You win the depth race." : "Bot wins this dive.") : "Collect pearls and time dash bursts.";
 }
 
 function renderEmotion() {
@@ -325,7 +315,10 @@ function renderEmotion() {
   if (Math.random() < 0.02) e.botHidden = Math.max(0, e.botHidden - 6);
   if (Math.random() < 0.01 && e.calm < 3) e.calm += 1;
 
-  ctx.fillStyle = "#1c1830";
+  const grad = ctx.createRadialGradient(380, 170, 30, 380, 170, 360);
+  grad.addColorStop(0, "#2d2247");
+  grad.addColorStop(1, "#130f21");
+  ctx.fillStyle = grad;
   ctx.fillRect(0, 0, 760, 340);
   ctx.fillStyle = "#f4d4be";
   ctx.fillRect(170, 90, 120, 120);
@@ -341,10 +334,7 @@ function renderEmotion() {
   el.stats.append(stat("Calm charges", e.calm));
   el.stats.append(stat("Journal uses", e.journal));
   el.stats.append(stat("Trust", state.trust));
-
-  if (e.hidden >= 95) el.status.textContent = "Your hidden stress broke through.";
-  else if (e.botHidden >= 95) el.status.textContent = "Bot cracked first—you stabilized better.";
-  else el.status.textContent = "Use Breathe/Journal strategically before stress spikes.";
+  el.status.textContent = e.hidden >= 95 ? "Your hidden stress broke through." : e.botHidden >= 95 ? "Bot cracked first—you stabilized better." : "Use Breathe/Journal strategically.";
 }
 
 function renderDig() {
@@ -352,10 +342,14 @@ function renderDig() {
   if (Math.random() < 0.025) d.botLayer = Math.min(d.finds.length - 1, d.botLayer + 1);
   if (d.boost > 0) d.boost -= 1;
 
-  ctx.fillStyle = "#3a2818";
+  const grad = ctx.createLinearGradient(0, 0, 0, 340);
+  grad.addColorStop(0, "#4a3020");
+  grad.addColorStop(1, "#24160e");
+  ctx.fillStyle = grad;
   ctx.fillRect(0, 0, 760, 340);
+
   for (let i = 0; i < d.finds.length; i++) {
-    ctx.fillStyle = i <= d.layer ? "#7a5632" : "#4a3421";
+    ctx.fillStyle = i <= d.layer ? "#8b643e" : "#543b27";
     ctx.fillRect(40 + i * 98, 78, 76, 190);
   }
 
@@ -403,19 +397,27 @@ function renderMirror() {
   el.stats.append(stat("Bot x", Math.floor(m.botX)));
   el.stats.append(stat("Phase charges", m.phase));
   el.stats.append(stat("Trust", state.trust));
-
-  if (hitTrap) el.status.textContent = "Mirror self hit a trap.";
-  else if (m.x >= m.goal || m.botX >= m.goal) el.status.textContent = m.x >= m.botX ? "You escaped both worlds." : "Bot escaped first.";
-  else el.status.textContent = "Use Phase Shift to pass trap zones safely.";
+  el.status.textContent = hitTrap ? "Mirror self hit a trap." : (m.x >= m.goal || m.botX >= m.goal) ? (m.x >= m.botX ? "You escaped both worlds." : "Bot escaped first.") : "Use Phase Shift to pass trap zones safely.";
 }
 
 function renderTrident() {
   const t = state.trident;
-  ctx.fillStyle = "#2d1b2a";
+
+  // cinematic background
+  const grad = ctx.createLinearGradient(0, 0, 0, 340);
+  grad.addColorStop(0, "#2f1830");
+  grad.addColorStop(1, "#1c0f1d");
+  ctx.fillStyle = grad;
   ctx.fillRect(0, 0, 760, 340);
 
-  ctx.fillStyle = "#3c6a91";
+  ctx.fillStyle = "#4d2b2f";
   ctx.fillRect(0, 260, 760, 80);
+
+  // arena fog
+  for (let i = 0; i < 30; i++) {
+    ctx.fillStyle = `rgba(255,255,255,${0.02 + (i % 5) * 0.005})`;
+    ctx.fillRect((i * 37) % 760, 220 + (i % 7) * 9, 42, 4);
+  }
 
   // players
   ctx.fillStyle = "#7de8ff";
@@ -423,7 +425,17 @@ function renderTrident() {
   ctx.fillStyle = "#ff9db5";
   ctx.fillRect(665, 220, 26, 40);
 
-  // aim helper on your turn
+  // death animation overlays
+  if (t.deathAnim) {
+    t.deathAnim.timer -= 1;
+    const alpha = Math.max(0, t.deathAnim.timer / 90);
+    ctx.fillStyle = t.deathAnim.side === "bot" ? `rgba(255, 30, 60, ${0.35 * alpha})` : `rgba(120, 190, 255, ${0.35 * alpha})`;
+    const x = t.deathAnim.side === "bot" ? 630 : 40;
+    ctx.fillRect(x, 180, 90, 120);
+    if (t.deathAnim.timer <= 0) t.deathAnim = null;
+  }
+
+  // aim helper
   if (t.turn === "you" && !t.projectile && t.youHP > 0 && t.botHP > 0) {
     const rad = (t.aimAngle * Math.PI) / 180;
     const tx = 95 + Math.cos(rad) * (t.aimPower * 3.2);
@@ -435,12 +447,35 @@ function renderTrident() {
     ctx.stroke();
   }
 
-  // projectile physics
+  // blood particles
+  t.blood.forEach((p) => {
+    p.vy += 0.08;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life -= 1;
+    ctx.fillStyle = `rgba(180,20,35,${Math.max(0, p.life / 80)})`;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  t.blood = t.blood.filter((p) => p.life > 0 && p.y < 340);
+
+  // projectile physics + trail
   if (t.projectile) {
-    t.projectile.vy += 0.22; // gravity
-    t.projectile.vx += t.wind; // wind
+    t.projectile.vy += 0.22;
+    t.projectile.vx += t.wind;
     t.projectile.x += t.projectile.vx;
     t.projectile.y += t.projectile.vy;
+    t.projectile.trail.push({ x: t.projectile.x, y: t.projectile.y });
+    if (t.projectile.trail.length > 18) t.projectile.trail.shift();
+
+    ctx.strokeStyle = "rgba(255,220,180,0.45)";
+    ctx.beginPath();
+    t.projectile.trail.forEach((pt, idx) => {
+      if (idx === 0) ctx.moveTo(pt.x, pt.y);
+      else ctx.lineTo(pt.x, pt.y);
+    });
+    ctx.stroke();
 
     ctx.save();
     ctx.translate(t.projectile.x, t.projectile.y);
@@ -454,12 +489,24 @@ function renderTrident() {
 
     if (hitYou && t.projectile.owner === "bot") {
       t.youHP = Math.max(0, t.youHP - 1);
-      addBubble("Bot hit you with a trident.");
+      spawnBlood(83, 238, 22);
+      if (t.youHP <= 0) {
+        t.deathAnim = { side: "you", timer: 90 };
+        addBubble("Fatal hit. You fall in the arena.");
+      } else {
+        addBubble("Bot hit you with a trident.");
+      }
       t.projectile = null;
       t.wind = (Math.random() - 0.5) * 0.12;
     } else if (hitBot && t.projectile.owner === "you") {
       t.botHP = Math.max(0, t.botHP - 1);
-      addBubble("Direct hit! You tagged the bot.", "you");
+      spawnBlood(678, 238, 22);
+      if (t.botHP <= 0) {
+        t.deathAnim = { side: "bot", timer: 90 };
+        addBubble("Direct kill shot. Bot is down.", "you");
+      } else {
+        addBubble("Direct hit! You tagged the bot.", "you");
+      }
       t.projectile = null;
       t.wind = (Math.random() - 0.5) * 0.12;
     } else if (t.projectile.y > 340 || t.projectile.x < -40 || t.projectile.x > 800) {
@@ -482,7 +529,7 @@ function renderTrident() {
 
   if (t.youHP <= 0) el.status.textContent = "Bot wins the duel.";
   else if (t.botHP <= 0) el.status.textContent = "You win the trident duel!";
-  else el.status.textContent = "Take turns throwing. Adjust angle/power for arc + wind.";
+  else el.status.textContent = "Take turns throwing. Account for gravity + wind.";
 }
 
 function frame() {
