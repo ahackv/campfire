@@ -5,6 +5,7 @@ const MODES = [
   { id: "mirror", title: "🪞 Mirror World", summary: "Move in dual worlds and avoid hidden traps." },
   { id: "trident", title: "🔱 Trident Duel", summary: "Turn-based physics throws with wind, blood splashes, and death animations." },
   { id: "text", title: "💬 Read Between the Lines", summary: "Text-only chat where your replies decide if your friend opens up." },
+  { id: "up", title: "🪜 Ocean Only Up", summary: "Vertical ocean platform climb with jumps, boosts, and pearl combos." },
 ];
 
 const el = {
@@ -215,6 +216,7 @@ function getMusicEnergy() {
   if (state.mode === "mirror") return Math.min(1, Math.max(state.mirror.x, state.mirror.botX) / state.mirror.goal);
   if (state.mode === "trident") return Math.min(1, (6 - (state.trident.youHP + state.trident.botHP)) / 6);
   if (state.mode === "text") return Math.min(1, state.text.round / 5);
+  if (state.mode === "up") return Math.min(1, state.up.bestHeight / 1800);
   return 0;
 }
 
@@ -535,6 +537,21 @@ const state = {
     over: false,
     lastHint: "",
   },
+  up: {
+    x: 380,
+    y: 260,
+    vx: 0,
+    vy: 0,
+    cameraY: 0,
+    bestHeight: 0,
+    pearls: 0,
+    combo: 0,
+    maxCombo: 0,
+    boosts: 2,
+    over: false,
+    platforms: [],
+    pearlsMap: [],
+  },
   transition: {
     active: false,
     modeId: null,
@@ -656,6 +673,23 @@ function spawnOceanEntities() {
   for (let i = 0; i < 8; i++) state.ocean.pearlsMap.push({ x: Math.random() * 720 + 20, y: Math.random() * 300 + 20, taken: false });
 }
 
+
+function createOnlyUpPlatforms() {
+  const platforms = [];
+  let y = 300;
+  for (let i = 0; i < 70; i++) {
+    const width = 70 + Math.random() * 90;
+    const x = 20 + Math.random() * (740 - width);
+    platforms.push({ x, y, w: width, h: 12, bob: Math.random() * Math.PI * 2, moving: i % 5 === 0, vx: (Math.random() > 0.5 ? 1 : -1) * (0.3 + Math.random() * 0.6) });
+    y -= 42 + Math.random() * 28;
+  }
+  return platforms;
+}
+
+function createOnlyUpPearls(platforms) {
+  return platforms.filter((_, i) => i % 3 === 1).map((p, i) => ({ x: p.x + p.w * 0.5, y: p.y - 14, r: 5 + (i % 2), taken: false }));
+}
+
 function setupMode(id) {
   clearGameUI();
   state.mode = id;
@@ -725,6 +759,34 @@ function setupMode(id) {
     document.getElementById("directBtn").onclick = () => { el.msgInput.value = "You said you're fine but it sounds heavy. Want to share?"; el.msgInput.focus(); };
     addBubble("Text game back online. Type anything and read between the lines.");
     addBubble("Friend: i'm fine, just tired i guess");
+  }
+  if (id === "up") {
+    const platforms = createOnlyUpPlatforms();
+    state.up = {
+      x: 380,
+      y: 260,
+      vx: 0,
+      vy: 0,
+      cameraY: 0,
+      bestHeight: 0,
+      pearls: 0,
+      combo: 0,
+      maxCombo: 0,
+      boosts: 2,
+      over: false,
+      platforms,
+      pearlsMap: createOnlyUpPearls(platforms),
+    };
+    el.controls.innerHTML = '<button id="upBoostBtn">Bubble Boost</button><span class="stat">Move: A/D or ←/→, Jump: W/↑/Space</span>';
+    document.getElementById("upBoostBtn").onclick = () => {
+      if (state.up.boosts > 0 && !state.up.over) {
+        state.up.boosts -= 1;
+        state.up.vy = -11.8;
+        state.up.combo += 1;
+        state.up.maxCombo = Math.max(state.up.maxCombo, state.up.combo);
+      }
+    };
+    addBubble("Only Up starts now — climb the reef towers and chain pearl combos!");
   }
 }
 
@@ -1135,6 +1197,117 @@ function drawSeaLifeDecor(timeSeed = 0) {
   }
 }
 
+
+function renderOnlyUp() {
+  const u = state.up;
+  drawSeaBackdrop(u.bestHeight * 0.6 + u.pearls * 25, ["#6be8ff", "#3389d2", "#203a7a"]);
+  drawSeaLifeDecor(u.bestHeight * 0.35 + 30);
+
+  const left = keys.has("arrowleft") || keys.has("a");
+  const right = keys.has("arrowright") || keys.has("d");
+  const jump = keys.has("arrowup") || keys.has("w") || keys.has(" ");
+
+  if (!u.over) {
+    if (left) u.vx -= 0.35;
+    if (right) u.vx += 0.35;
+    u.vx *= 0.9;
+    u.vx = Math.max(-4.4, Math.min(4.4, u.vx));
+    if (jump && u.vy > -0.7 && u.vy < 0.9) u.vy = -8.9;
+
+    u.vy += 0.35;
+    const prevY = u.y;
+    u.x += u.vx;
+    u.y += u.vy;
+
+    if (u.x < 10) { u.x = 10; u.vx = 0; }
+    if (u.x > 750) { u.x = 750; u.vx = 0; }
+
+    u.platforms.forEach((p) => {
+      if (p.moving) {
+        p.x += p.vx;
+        if (p.x < 0 || p.x + p.w > 760) p.vx *= -1;
+      }
+      const py = p.y + Math.sin(Date.now() * 0.002 + p.bob) * 2;
+      const landed = prevY + 12 <= py && u.y + 12 >= py && u.x > p.x - 8 && u.x < p.x + p.w + 8 && u.vy >= 0;
+      if (landed) {
+        u.y = py - 12;
+        u.vy = -8.4;
+        u.combo += 1;
+        u.maxCombo = Math.max(u.maxCombo, u.combo);
+      }
+    });
+
+    u.pearlsMap.forEach((pearl) => {
+      if (!pearl.taken && Math.hypot(pearl.x - u.x, pearl.y - u.y) < 13) {
+        pearl.taken = true;
+        u.pearls += 1;
+        u.combo += 1;
+        u.maxCombo = Math.max(u.maxCombo, u.combo);
+      }
+    });
+
+    const heightNow = Math.max(0, 300 - u.y);
+    u.bestHeight = Math.max(u.bestHeight, heightNow);
+    if (u.bestHeight > 0) u.cameraY = Math.max(u.cameraY, u.bestHeight - 120);
+
+    if (u.y - u.cameraY > 390) {
+      u.over = true;
+      markEventOnce("up-fail", "fail");
+    }
+
+    if (u.bestHeight >= 1700) {
+      u.over = true;
+      markEventOnce("up-win", "victory");
+    }
+  }
+
+  ctx.save();
+  ctx.translate(0, u.cameraY);
+
+  u.platforms.forEach((p, idx) => {
+    const py = p.y + Math.sin(Date.now() * 0.002 + p.bob) * 2;
+    ctx.fillStyle = idx % 2 ? "#77ffd2" : "#ffc8e9";
+    ctx.fillRect(p.x, py, p.w, p.h);
+    ctx.fillStyle = "rgba(10, 54, 79, 0.5)";
+    ctx.fillRect(p.x, py + p.h - 3, p.w, 3);
+  });
+
+  u.pearlsMap.forEach((pearl) => {
+    if (pearl.taken) return;
+    ctx.fillStyle = "#7de8ff";
+    ctx.beginPath();
+    ctx.arc(pearl.x, pearl.y, pearl.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  ctx.fillStyle = u.over ? "#ff9abf" : "#ffe987";
+  ctx.beginPath();
+  ctx.ellipse(u.x, u.y, 10, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(u.x - 9, u.y);
+  ctx.lineTo(u.x - 16, u.y - 5);
+  ctx.lineTo(u.x - 16, u.y + 5);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+
+  checkFunnyNumbers([u.bestHeight, u.pearls, u.maxCombo]);
+
+  el.stats.innerHTML = "";
+  el.stats.append(stat("Height", Math.floor(u.bestHeight)));
+  el.stats.append(stat("Pearls", u.pearls));
+  el.stats.append(stat("Combo", u.combo));
+  el.stats.append(stat("Best Combo", u.maxCombo));
+  el.stats.append(stat("Bubble Boost", u.boosts));
+  el.stats.append(stat("Trust", state.trust));
+
+  if (!u.over) el.status.textContent = "Climb up! Chain landings + pearls for huge combos.";
+  else if (u.bestHeight >= 1700) el.status.textContent = "You reached the sky reef! Massive win.";
+  else el.status.textContent = "Splash down! Try a cleaner climb and use boosts wisely.";
+}
+
 function renderOcean() {
   const o = state.ocean;
   let speed = 3;
@@ -1480,6 +1653,7 @@ function frame() {
     if (state.mode === "mirror") renderMirror();
     if (state.mode === "trident") renderTrident();
     if (state.mode === "text") renderTextMode();
+    if (state.mode === "up") renderOnlyUp();
   }
   requestAnimationFrame(frame);
 }
