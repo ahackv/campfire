@@ -1,203 +1,213 @@
-import * as THREE from "https://unpkg.com/three@0.165.0/build/three.module.js";
+const scenes = [
+  {
+    signal: "flat replies",
+    characterLine: "I'm fine. Just tired, I guess.",
+    subtext: "Short message. Long pause before sending.",
+    supportive: [
+      "Thanks... today kind of steamrolled me.",
+      "I said 'fine' because I didn't know how to explain it.",
+    ],
+    neutral: [
+      "Maybe. I don't know.",
+      "Yeah, maybe I'm just off today.",
+    ],
+    harmful: ["It's okay. Forget I said anything.", "Right. Never mind."],
+  },
+  {
+    signal: "late-night spiral",
+    characterLine: "It's whatever. Nothing I can't handle.",
+    subtext: "Sent after 3 AM.",
+    supportive: [
+      "Could you stay for a little while? I don't want to be alone.",
+      "I keep pretending it's under control, but it's not.",
+    ],
+    neutral: ["I'll probably be okay by morning.", "Maybe it'll pass."],
+    harmful: ["Yeah. Shouldn't have texted.", "Sorry. I'll stop talking about it."],
+  },
+  {
+    signal: "deflection",
+    characterLine: "Don't worry about me. I'm used to it.",
+    subtext: "Typing appears, disappears, appears again.",
+    supportive: [
+      "That actually hurt a lot more than I expected.",
+      "Someone I trusted made me feel small.",
+    ],
+    neutral: ["It's not important.", "I don't know how to explain it."],
+    harmful: ["You're right. I should just deal with it.", "Forget this."],
+  },
+  {
+    signal: "running on empty",
+    characterLine: "I'm okay. Just need sleep.",
+    subtext: "Their status says awake for too long.",
+    supportive: [
+      "Sleep would help, but there's this constant pressure in my chest too.",
+      "Could we make a tiny plan for tonight? I feel scattered.",
+    ],
+    neutral: ["Yeah, maybe sleep fixes it.", "I just need to shut my brain off."],
+    harmful: ["Okay. I'll just disappear for a bit.", "Sorry for bothering you."],
+  },
+  {
+    signal: "last chance",
+    characterLine: "I'm fine, really. You don't need to worry.",
+    subtext: "This is the first real conversation in weeks.",
+    supportive: [
+      "Thank you for not taking 'fine' at face value.",
+      "I wasn't fine. I was scared to say it out loud.",
+    ],
+    neutral: ["Thanks for trying.", "Maybe we can talk another time."],
+    harmful: ["I trusted the wrong person.", "It's okay. I won't bring this up again."],
+  },
+];
 
-const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x021325, 0.012);
+const quickPrompts = [
+  "You don't have to pretend with me.",
+  "Do you want to talk or just have company?",
+  "I'm here. No pressure.",
+  "You're overreacting.",
+  "That sounds painful. Want to tell me more?",
+  "Same lol anyway...",
+];
 
-const camera = new THREE.PerspectiveCamera(
-  70,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  500
-);
-camera.position.set(0, 2, 13);
+const state = { round: 0, trust: 0, done: false };
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-document.body.appendChild(renderer.domElement);
+const roundEl = document.getElementById("round");
+const trustEl = document.getElementById("trust");
+const signalEl = document.getElementById("signal");
+const chatEl = document.getElementById("chat");
+const quickEl = document.getElementById("quick");
+const endingEl = document.getElementById("ending");
+const composerEl = document.getElementById("composer");
+const replyEl = document.getElementById("reply");
 
-const ambient = new THREE.AmbientLight(0x9bd5ff, 1.2);
-scene.add(ambient);
-
-const point = new THREE.PointLight(0xb5f2ff, 2.5, 25, 2.1);
-scene.add(point);
-
-const world = {
-  depth: 0,
-  speed: 0.06,
-  enemies: [],
-  keys: new Set(),
-  gameOver: false,
-  score: 0,
-};
-
-const diver = new THREE.Group();
-const body = new THREE.Mesh(
-  new THREE.CapsuleGeometry(0.6, 1.4, 4, 8),
-  new THREE.MeshStandardMaterial({ color: 0xffb16b, roughness: 0.55 })
-);
-body.rotation.z = Math.PI / 2;
-
-const tank = new THREE.Mesh(
-  new THREE.BoxGeometry(1.1, 0.65, 0.75),
-  new THREE.MeshStandardMaterial({ color: 0x4a6178, metalness: 0.35, roughness: 0.6 })
-);
-tank.position.set(-0.15, 0.35, -0.2);
-
-const visor = new THREE.Mesh(
-  new THREE.SphereGeometry(0.4, 18, 18),
-  new THREE.MeshStandardMaterial({ color: 0x80dbff, transparent: true, opacity: 0.65 })
-);
-visor.position.set(0.75, 0.25, 0);
-
-const finL = new THREE.Mesh(
-  new THREE.BoxGeometry(0.45, 0.1, 0.9),
-  new THREE.MeshStandardMaterial({ color: 0x223040 })
-);
-finL.position.set(-1, -0.25, 0.3);
-
-const finR = finL.clone();
-finR.position.z = -0.3;
-
-[body, tank, visor, finL, finR].forEach((part) => diver.add(part));
-scene.add(diver);
-
-const particles = new THREE.Group();
-for (let i = 0; i < 260; i++) {
-  const p = new THREE.Mesh(
-    new THREE.SphereGeometry(0.05, 8, 8),
-    new THREE.MeshBasicMaterial({ color: 0xa6e8ff, transparent: true, opacity: 0.35 })
-  );
-  p.position.set((Math.random() - 0.5) * 50, Math.random() * 70 - 30, (Math.random() - 0.5) * 50);
-  particles.add(p);
-}
-scene.add(particles);
-
-function spawnEnemy() {
-  const enemy = new THREE.Mesh(
-    new THREE.ConeGeometry(0.8, 2.3, 7),
-    new THREE.MeshStandardMaterial({ color: 0x11070d, emissive: 0x220012, roughness: 0.9 })
-  );
-  enemy.rotation.z = Math.PI / 2;
-  enemy.position.set((Math.random() - 0.5) * 18, diver.position.y - 18 - Math.random() * 24, (Math.random() - 0.5) * 12);
-  enemy.userData.speed = 0.018 + Math.random() * 0.03;
-  scene.add(enemy);
-  world.enemies.push(enemy);
-}
-
-for (let i = 0; i < 5; i++) spawnEnemy();
-
-const depthEl = document.getElementById("depth");
-const dangerEl = document.getElementById("danger");
-const messageEl = document.getElementById("message");
-
-window.addEventListener("keydown", (e) => {
-  world.keys.add(e.key.toLowerCase());
-  if (!world.gameOver) messageEl.style.opacity = "0";
-});
-window.addEventListener("keyup", (e) => world.keys.delete(e.key.toLowerCase()));
-
-function updatePlayer() {
-  const move = new THREE.Vector3();
-  const speed = 0.16;
-
-  if (world.keys.has("arrowleft") || world.keys.has("a")) move.x -= speed;
-  if (world.keys.has("arrowright") || world.keys.has("d")) move.x += speed;
-  if (world.keys.has("arrowup") || world.keys.has("w")) move.y += speed;
-  if (world.keys.has("arrowdown") || world.keys.has("s")) move.y -= speed;
-
-  diver.position.add(move);
-  diver.position.x = THREE.MathUtils.clamp(diver.position.x, -9.5, 9.5);
-  diver.position.y = THREE.MathUtils.clamp(diver.position.y, -Infinity, 6.5);
-
-  world.depth += world.speed;
-  diver.position.y -= world.speed;
-
-  const swim = Math.sin(performance.now() * 0.01) * 0.1;
-  finL.rotation.y = swim;
-  finR.rotation.y = -swim;
-
-  point.position.copy(diver.position).add(new THREE.Vector3(2, 0.5, 0));
-  camera.position.x += (diver.position.x - camera.position.x) * 0.08;
-  camera.position.y += (diver.position.y + 2 - camera.position.y) * 0.08;
-  camera.lookAt(diver.position.x, diver.position.y, 0);
+function addBubble(text, role, detail = "") {
+  const bubble = document.createElement("article");
+  bubble.className = `bubble ${role}`;
+  bubble.innerHTML = `${text}${detail ? `<div class="hint">${detail}</div>` : ""}`;
+  chatEl.appendChild(bubble);
+  chatEl.scrollTop = chatEl.scrollHeight;
 }
 
-function updateDanger() {
-  const t = THREE.MathUtils.clamp(world.depth / 240, 0, 1);
-  const bg = new THREE.Color().lerpColors(new THREE.Color(0x4ecbff), new THREE.Color(0x020611), t);
-  renderer.setClearColor(bg);
-
-  ambient.intensity = THREE.MathUtils.lerp(1.2, 0.12, t);
-  point.intensity = THREE.MathUtils.lerp(2.5, 0.5, t);
-  point.distance = THREE.MathUtils.lerp(25, 8, t);
-  scene.fog.density = THREE.MathUtils.lerp(0.012, 0.065, t);
-
-  const enemyCount = 5 + Math.floor(world.depth / 35);
-  while (world.enemies.length < enemyCount) spawnEnemy();
-
-  let danger = "Calm";
-  if (world.depth > 70) danger = "Uneasy";
-  if (world.depth > 150) danger = "Threatening";
-  if (world.depth > 230) danger = "Abyssal";
-
-  depthEl.textContent = `Depth: ${Math.floor(world.depth)}m`;
-  dangerEl.textContent = `Danger: ${danger}`;
+function updateHeader(signal = "hard to read") {
+  roundEl.textContent = `Round: ${Math.min(state.round + 1, scenes.length)} / ${scenes.length}`;
+  trustEl.textContent = `Connection: ${state.trust}`;
+  signalEl.textContent = `Signal: ${signal}`;
 }
 
-function updateEnemies() {
-  for (const enemy of world.enemies) {
-    const direction = new THREE.Vector3().subVectors(diver.position, enemy.position).normalize();
-    enemy.position.addScaledVector(direction, enemy.userData.speed);
+function classifyReply(rawText) {
+  const text = rawText.toLowerCase();
 
-    enemy.rotation.y = Math.atan2(direction.x, direction.z);
-    enemy.rotation.z = -Math.PI / 2 + Math.sin(performance.now() * 0.002 + enemy.position.x) * 0.2;
+  const supportiveWords = [
+    "here", "listen", "talk", "sorry", "care", "matter", "with you", "want", "help", "okay to", "no pressure",
+    "you can", "tell me", "what happened", "how are", "stay", "company", "understand", "that sounds",
+  ];
+  const harmfulWords = [
+    "dramatic", "overreact", "whatever", "annoying", "stop", "deal with it", "not my problem", "too sensitive",
+    "toughen", "don't care", "shut up", "cry", "lazy", "get over", "fine then",
+  ];
+  const avoidantWords = ["anyway", "lol", "k", "cool", "same", "idc", "brb"];
 
-    if (enemy.position.distanceTo(diver.position) < 1.1) {
-      world.gameOver = true;
-    }
+  let score = 0;
+  supportiveWords.forEach((word) => {
+    if (text.includes(word)) score += 2;
+  });
+  harmfulWords.forEach((word) => {
+    if (text.includes(word)) score -= 3;
+  });
+  avoidantWords.forEach((word) => {
+    if (text.includes(word)) score -= 1;
+  });
 
-    if (enemy.position.y > diver.position.y + 25) {
-      enemy.position.set((Math.random() - 0.5) * 18, diver.position.y - 20 - Math.random() * 15, (Math.random() - 0.5) * 12);
-    }
+  if (text.includes("?")) score += 1;
+  if (text.length < 3) score -= 1;
+
+  if (score >= 2) return { kind: "supportive", delta: 2 };
+  if (score <= -2) return { kind: "harmful", delta: -3 };
+  return { kind: "neutral", delta: 0 };
+}
+
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function respondToInput(input) {
+  const scene = scenes[state.round];
+  const read = classifyReply(input);
+
+  state.trust += read.delta;
+
+  if (read.kind === "supportive") {
+    addBubble(`<strong>Character:</strong> ${pick(scene.supportive)}`, "char");
+  } else if (read.kind === "harmful") {
+    addBubble(`<strong>Character:</strong> ${pick(scene.harmful)}`, "char");
+  } else {
+    addBubble(`<strong>Character:</strong> ${pick(scene.neutral)}`, "char");
   }
+
+  state.round += 1;
+  renderScene();
 }
 
-function updateParticles() {
-  particles.children.forEach((p) => {
-    p.position.y += 0.03;
-    if (p.position.y > diver.position.y + 30) {
-      p.position.y = diver.position.y - 36;
-      p.position.x = (Math.random() - 0.5) * 50;
-    }
+function endGame() {
+  state.done = true;
+  composerEl.classList.add("hidden");
+  quickEl.classList.add("hidden");
+  endingEl.classList.remove("hidden");
+
+  if (state.trust >= 6) {
+    endingEl.innerHTML = `<strong>✨ Quiet Truth Ending</strong><p>You listened between the lines. They finally admit they weren't okay and ask for help directly.</p><p>You both make a simple plan for tonight and tomorrow.</p>`;
+  } else if (state.trust >= 1) {
+    endingEl.innerHTML = `<strong>🌙 Unfinished Ending</strong><p>Some moments landed, some didn't. They open up a little, but hold back the rest.</p><p>You leave the chat with the door still open.</p>`;
+  } else {
+    endingEl.innerHTML = `<strong>💔 Lost Signal Ending</strong><p>The words "I'm fine" stayed on the surface. They shut down before the truth came out.</p>`;
+  }
+
+  const restartBtn = document.createElement("button");
+  restartBtn.textContent = "Play again";
+  restartBtn.addEventListener("click", () => window.location.reload());
+  endingEl.appendChild(restartBtn);
+  updateHeader("locked");
+}
+
+function renderQuickPrompts() {
+  quickEl.innerHTML = "";
+  quickPrompts.forEach((prompt) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = prompt;
+    b.addEventListener("click", () => {
+      replyEl.value = prompt;
+      replyEl.focus();
+    });
+    quickEl.appendChild(b);
   });
 }
 
-function gameOverScreen() {
-  messageEl.style.opacity = "1";
-  messageEl.innerHTML = `<div><strong>You were pulled into the dark.</strong><br/>Final depth: ${Math.floor(
-    world.depth
-  )}m<br/>Refresh to dive again.</div>`;
-}
-
-function animate() {
-  requestAnimationFrame(animate);
-
-  if (!world.gameOver) {
-    updatePlayer();
-    updateDanger();
-    updateEnemies();
-    updateParticles();
-  } else {
-    gameOverScreen();
+function renderScene() {
+  if (state.round >= scenes.length) {
+    endGame();
+    return;
   }
 
-  renderer.render(scene, camera);
+  const scene = scenes[state.round];
+  updateHeader(scene.signal);
+  addBubble(`<strong>Character:</strong> ${scene.characterLine}`, "char", scene.subtext);
 }
-animate();
 
-window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+composerEl.addEventListener("submit", (event) => {
+  event.preventDefault();
+  if (state.done) return;
+
+  const text = replyEl.value.trim();
+  if (!text) return;
+
+  addBubble(`<strong>You:</strong> ${text}`, "player");
+  replyEl.value = "";
+  setTimeout(() => respondToInput(text), 170);
 });
+
+addBubble(
+  '<strong>System:</strong> Reply in your own words. There are no fixed options now — type anything.',
+  "char"
+);
+renderQuickPrompts();
+renderScene();
