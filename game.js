@@ -40,8 +40,9 @@ const state = {
     youHP: 3,
     botHP: 3,
     turn: "you",
-    aimAngle: 42,
-    aimPower: 15,
+    dragging: false,
+    dragX: 95,
+    dragY: 240,
     projectile: null,
     wind: 0,
     cooldown: 0,
@@ -195,14 +196,9 @@ function setupMode(id) {
     addBubble("Watch both worlds. Phase Shift lets you ghost through traps briefly.");
   }
   if (id === "trident") {
-    state.trident = { youHP: 3, botHP: 3, turn: "you", aimAngle: 42, aimPower: 15, projectile: null, wind: (Math.random() - 0.5) * 0.12, cooldown: 0, blood: [], deathAnim: null };
-    el.controls.innerHTML = '<button id="angleUp">Angle +</button><button id="angleDown">Angle -</button><button id="powerUp">Power +</button><button id="powerDown">Power -</button><button id="throwBtn">Throw Trident</button>';
-    document.getElementById("angleUp").onclick = () => state.trident.aimAngle = Math.min(80, state.trident.aimAngle + 2);
-    document.getElementById("angleDown").onclick = () => state.trident.aimAngle = Math.max(8, state.trident.aimAngle - 2);
-    document.getElementById("powerUp").onclick = () => state.trident.aimPower = Math.min(28, state.trident.aimPower + 1);
-    document.getElementById("powerDown").onclick = () => state.trident.aimPower = Math.max(8, state.trident.aimPower - 1);
-    document.getElementById("throwBtn").onclick = () => tryThrowTrident();
-    addBubble("Turn duel started. Set angle + power, then throw.");
+    state.trident = { youHP: 3, botHP: 3, turn: "you", dragging: false, dragX: 95, dragY: 240, projectile: null, wind: (Math.random() - 0.5) * 0.12, cooldown: 0, blood: [], deathAnim: null };
+    el.controls.innerHTML = '<span class="stat">Your turn: click near your diver, pull back, release to throw.</span>';
+    addBubble("Turn duel started. Drag with your mouse to aim and set power.");
   }
 }
 
@@ -218,14 +214,30 @@ function showMenu() {
   el.gameView.classList.add("hidden");
 }
 
-function tryThrowTrident() {
+function tryThrowTrident(releaseX, releaseY) {
   const t = state.trident;
   if (state.mode !== "trident" || t.projectile || t.turn !== "you" || t.youHP <= 0 || t.botHP <= 0) return;
-  const rad = (t.aimAngle * Math.PI) / 180;
-  t.projectile = { x: 95, y: 240, vx: Math.cos(rad) * t.aimPower * 0.55, vy: -Math.sin(rad) * t.aimPower * 0.55, owner: "you", trail: [] };
+
+  const anchorX = 95;
+  const anchorY = 240;
+  const pullX = anchorX - releaseX;
+  const pullY = anchorY - releaseY;
+  const power = Math.min(30, Math.hypot(pullX, pullY) * 0.22);
+  if (power < 2.5) return;
+
+  t.projectile = {
+    x: anchorX,
+    y: anchorY,
+    vx: pullX * 0.08,
+    vy: pullY * 0.08,
+    owner: "you",
+    trail: [],
+  };
   t.turn = "bot";
-  addBubble(`You throw at ${t.aimAngle}° / power ${t.aimPower}.`, "you");
+  t.dragging = false;
+  addBubble(`You throw with power ${power.toFixed(1)}.`, "you");
 }
+
 function botThrow() {
   const t = state.trident;
   if (t.projectile || t.turn !== "bot" || t.youHP <= 0 || t.botHP <= 0 || t.cooldown > 0) return;
@@ -248,6 +260,39 @@ function spawnBlood(x, y, amount = 18) {
 el.backBtn.addEventListener("click", showMenu);
 window.addEventListener("keydown", (e) => keys.add(e.key.toLowerCase()));
 window.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
+
+el.canvas.addEventListener("mousedown", (e) => {
+  if (state.mode !== "trident") return;
+  const t = state.trident;
+  if (t.turn !== "you" || t.projectile || t.youHP <= 0 || t.botHP <= 0) return;
+  const rect = el.canvas.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) / rect.width) * el.canvas.width;
+  const y = ((e.clientY - rect.top) / rect.height) * el.canvas.height;
+  if (Math.hypot(x - 95, y - 240) < 90) {
+    t.dragging = true;
+    t.dragX = x;
+    t.dragY = y;
+  }
+});
+
+el.canvas.addEventListener("mousemove", (e) => {
+  if (state.mode !== "trident") return;
+  const t = state.trident;
+  if (!t.dragging) return;
+  const rect = el.canvas.getBoundingClientRect();
+  t.dragX = ((e.clientX - rect.left) / rect.width) * el.canvas.width;
+  t.dragY = ((e.clientY - rect.top) / rect.height) * el.canvas.height;
+});
+
+window.addEventListener("mouseup", (e) => {
+  if (state.mode !== "trident") return;
+  const t = state.trident;
+  if (!t.dragging) return;
+  const rect = el.canvas.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) / rect.width) * el.canvas.width;
+  const y = ((e.clientY - rect.top) / rect.height) * el.canvas.height;
+  tryThrowTrident(x, y);
+});
 el.composer.addEventListener("submit", (e) => {
   e.preventDefault();
   if (!state.running) return;
@@ -440,16 +485,22 @@ function renderTrident() {
     if (t.deathAnim.timer <= 0) t.deathAnim = null;
   }
 
-  // aim helper
+  // mouse pull-back aim helper
   if (t.turn === "you" && !t.projectile && t.youHP > 0 && t.botHP > 0) {
-    const rad = (t.aimAngle * Math.PI) / 180;
-    const tx = 95 + Math.cos(rad) * (t.aimPower * 3.2);
-    const ty = 240 - Math.sin(rad) * (t.aimPower * 3.2);
+    const anchorX = 95;
+    const anchorY = 240;
+    const tx = t.dragging ? t.dragX : anchorX - 32;
+    const ty = t.dragging ? t.dragY : anchorY - 20;
     ctx.strokeStyle = "#ffd670";
     ctx.beginPath();
-    ctx.moveTo(95, 240);
+    ctx.moveTo(anchorX, anchorY);
     ctx.lineTo(tx, ty);
     ctx.stroke();
+
+    ctx.fillStyle = "rgba(255,214,112,0.35)";
+    ctx.beginPath();
+    ctx.arc(tx, ty, 7, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   // blood particles
@@ -527,8 +578,8 @@ function renderTrident() {
   el.stats.append(stat("Your HP", t.youHP));
   el.stats.append(stat("Bot HP", t.botHP));
   el.stats.append(stat("Turn", t.turn));
-  el.stats.append(stat("Angle", `${t.aimAngle}°`));
-  el.stats.append(stat("Power", t.aimPower));
+  const previewPower = Math.min(30, Math.hypot(95 - t.dragX, 240 - t.dragY) * 0.22);
+  el.stats.append(stat("Aim power", t.dragging ? previewPower.toFixed(1) : "ready"));
   el.stats.append(stat("Wind", t.wind.toFixed(2)));
   el.stats.append(stat("Trust", state.trust));
 
