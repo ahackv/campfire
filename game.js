@@ -32,7 +32,7 @@ const state = {
   mode: null,
   running: false,
   trust: 0,
-  ocean: { x: 370, y: 160, depth: 0, botDepth: 0, hp: 4, pearls: 0, dash: 0, enemies: [], pearlsMap: [] },
+  ocean: { x: 370, y: 160, depth: 0, botDepth: 0, hp: 4, pearls: 0, dash: 0, hitCooldown: 0, enemies: [], pearlsMap: [] },
   emotion: { mask: 50, hidden: 20, botMask: 52, botHidden: 18, calm: 3, journal: 2 },
   dig: { layer: 0, botLayer: 0, truths: 0, boost: 0, finds: ["soil", "coins", "bones", "locket", "letter", "fear", "truth"], relics: 0 },
   mirror: { x: 70, mirrorX: 70, botX: 75, goal: 700, phase: 2, phaseTimer: 0, traps: [220, 340, 510], mirrorNoise: 0 },
@@ -161,7 +161,7 @@ function setupMode(id) {
   el.summary.textContent = m.summary;
 
   if (id === "ocean") {
-    state.ocean = { x: 370, y: 160, depth: 0, botDepth: 0, hp: 4, pearls: 0, dash: 0, enemies: [], pearlsMap: [] };
+    state.ocean = { x: 370, y: 160, depth: 0, botDepth: 0, hp: 4, pearls: 0, dash: 0, hitCooldown: 0, enemies: [], pearlsMap: [] };
     spawnOceanEntities();
     el.controls.innerHTML = '<button id="dashBtn">Dash Burst</button><span class="stat">Move: arrows / WASD</span>';
     document.getElementById("dashBtn").onclick = () => { if (state.ocean.dash <= 0) state.ocean.dash = 80; };
@@ -279,12 +279,17 @@ function renderOcean() {
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, 760, 340);
 
+  if (o.hitCooldown > 0) o.hitCooldown -= 1;
+
   o.enemies.forEach((en) => {
     en.x += en.vx;
     if (en.x < 0 || en.x > 760) en.vx *= -1;
     ctx.fillStyle = "#b32145";
     ctx.fillRect(en.x, en.y, 16, 8);
-    if (Math.hypot(en.x - o.x, en.y - o.y) < 14 && Math.random() < 0.02) o.hp = Math.max(0, o.hp - 1);
+    if (Math.hypot(en.x - o.x, en.y - o.y) < 14 && o.hitCooldown <= 0) {
+      o.hp = Math.max(0, o.hp - 1);
+      o.hitCooldown = 28;
+    }
   });
   o.pearlsMap.forEach((p) => {
     if (!p.taken) {
@@ -295,7 +300,7 @@ function renderOcean() {
   });
   if (o.pearlsMap.every((p) => p.taken)) spawnOceanEntities();
 
-  ctx.fillStyle = "#f6d86c";
+  ctx.fillStyle = o.hitCooldown > 0 ? "#ff9f9f" : "#f6d86c";
   ctx.fillRect(o.x, o.y, 12, 12);
 
   el.stats.innerHTML = "";
