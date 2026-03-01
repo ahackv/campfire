@@ -1,203 +1,281 @@
-import * as THREE from "https://unpkg.com/three@0.165.0/build/three.module.js";
+const MILESTONES = [25, 70, 140, 240, 360];
 
-const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x021325, 0.012);
+const convoBeats = [
+  {
+    signal: "normal comms",
+    line: "nice pace. i'll keep gathering too.",
+    subtext: "They send quickly, but no emoji like usual.",
+    supportive: ["thanks. didn't sleep much, but i'm okay to continue."],
+    neutral: ["yep, all good."],
+    harmful: ["copy. focusing on work."],
+  },
+  {
+    signal: "slight lag",
+    line: "you can take main route, i don't mind.",
+    subtext: "Response comes after a longer pause.",
+    supportive: ["appreciate that. honestly my head is noisy today."],
+    neutral: ["all good either way."],
+    harmful: ["sure. doesn't matter to me."],
+  },
+  {
+    signal: "thin replies",
+    line: "if i go quiet a bit that's normal.",
+    subtext: "They start typing, stop, then send this.",
+    supportive: ["thanks for checking in. i needed that."],
+    neutral: ["yeah just focused."],
+    harmful: ["understood."],
+  },
+  {
+    signal: "off rhythm",
+    line: "all fine here. just pushing depth.",
+    subtext: "Message is shorter than before.",
+    supportive: ["not fully fine, if i'm honest."],
+    neutral: ["i'll be okay."],
+    harmful: ["forget it."],
+  },
+  {
+    signal: "faint",
+    line: "after this run, can we talk for a minute?",
+    subtext: "No typo corrections. Very direct.",
+    supportive: ["thanks for noticing. i was trying to hide it."],
+    neutral: ["maybe later."],
+    harmful: ["never mind then."],
+  },
+];
 
-const camera = new THREE.PerspectiveCamera(
-  70,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  500
-);
-camera.position.set(0, 2, 13);
-
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-document.body.appendChild(renderer.domElement);
-
-const ambient = new THREE.AmbientLight(0x9bd5ff, 1.2);
-scene.add(ambient);
-
-const point = new THREE.PointLight(0xb5f2ff, 2.5, 25, 2.1);
-scene.add(point);
-
-const world = {
-  depth: 0,
-  speed: 0.06,
-  enemies: [],
-  keys: new Set(),
-  gameOver: false,
-  score: 0,
+const state = {
+  you: { salvage: 0, click: 1, auto: 0, depth: 1, bank: 0 },
+  rival: { salvage: 0, depth: 1, auto: 1, bank: 0 },
+  trust: 0,
+  beat: 0,
+  locked: false,
 };
 
-const diver = new THREE.Group();
-const body = new THREE.Mesh(
-  new THREE.CapsuleGeometry(0.6, 1.4, 4, 8),
-  new THREE.MeshStandardMaterial({ color: 0xffb16b, roughness: 0.55 })
-);
-body.rotation.z = Math.PI / 2;
+const el = {
+  youSalvage: document.getElementById("youSalvage"),
+  youDepth: document.getElementById("youDepth"),
+  youClick: document.getElementById("youClick"),
+  youAuto: document.getElementById("youAuto"),
+  rivalSalvage: document.getElementById("rivalSalvage"),
+  rivalDepth: document.getElementById("rivalDepth"),
+  rivalRate: document.getElementById("rivalRate"),
+  phase: document.getElementById("phase"),
+  chat: document.getElementById("chat"),
+  composer: document.getElementById("composer"),
+  reply: document.getElementById("reply"),
+  result: document.getElementById("result"),
+  harvestBtn: document.getElementById("harvestBtn"),
+  drillBtn: document.getElementById("drillBtn"),
+  autoBtn: document.getElementById("autoBtn"),
+  depthBtn: document.getElementById("depthBtn"),
+};
 
-const tank = new THREE.Mesh(
-  new THREE.BoxGeometry(1.1, 0.65, 0.75),
-  new THREE.MeshStandardMaterial({ color: 0x4a6178, metalness: 0.35, roughness: 0.6 })
-);
-tank.position.set(-0.15, 0.35, -0.2);
-
-const visor = new THREE.Mesh(
-  new THREE.SphereGeometry(0.4, 18, 18),
-  new THREE.MeshStandardMaterial({ color: 0x80dbff, transparent: true, opacity: 0.65 })
-);
-visor.position.set(0.75, 0.25, 0);
-
-const finL = new THREE.Mesh(
-  new THREE.BoxGeometry(0.45, 0.1, 0.9),
-  new THREE.MeshStandardMaterial({ color: 0x223040 })
-);
-finL.position.set(-1, -0.25, 0.3);
-
-const finR = finL.clone();
-finR.position.z = -0.3;
-
-[body, tank, visor, finL, finR].forEach((part) => diver.add(part));
-scene.add(diver);
-
-const particles = new THREE.Group();
-for (let i = 0; i < 260; i++) {
-  const p = new THREE.Mesh(
-    new THREE.SphereGeometry(0.05, 8, 8),
-    new THREE.MeshBasicMaterial({ color: 0xa6e8ff, transparent: true, opacity: 0.35 })
-  );
-  p.position.set((Math.random() - 0.5) * 50, Math.random() * 70 - 30, (Math.random() - 0.5) * 50);
-  particles.add(p);
-}
-scene.add(particles);
-
-function spawnEnemy() {
-  const enemy = new THREE.Mesh(
-    new THREE.ConeGeometry(0.8, 2.3, 7),
-    new THREE.MeshStandardMaterial({ color: 0x11070d, emissive: 0x220012, roughness: 0.9 })
-  );
-  enemy.rotation.z = Math.PI / 2;
-  enemy.position.set((Math.random() - 0.5) * 18, diver.position.y - 18 - Math.random() * 24, (Math.random() - 0.5) * 12);
-  enemy.userData.speed = 0.018 + Math.random() * 0.03;
-  scene.add(enemy);
-  world.enemies.push(enemy);
+function clamp(v, a, b) {
+  return Math.max(a, Math.min(b, v));
 }
 
-for (let i = 0; i < 5; i++) spawnEnemy();
-
-const depthEl = document.getElementById("depth");
-const dangerEl = document.getElementById("danger");
-const messageEl = document.getElementById("message");
-
-window.addEventListener("keydown", (e) => {
-  world.keys.add(e.key.toLowerCase());
-  if (!world.gameOver) messageEl.style.opacity = "0";
-});
-window.addEventListener("keyup", (e) => world.keys.delete(e.key.toLowerCase()));
-
-function updatePlayer() {
-  const move = new THREE.Vector3();
-  const speed = 0.16;
-
-  if (world.keys.has("arrowleft") || world.keys.has("a")) move.x -= speed;
-  if (world.keys.has("arrowright") || world.keys.has("d")) move.x += speed;
-  if (world.keys.has("arrowup") || world.keys.has("w")) move.y += speed;
-  if (world.keys.has("arrowdown") || world.keys.has("s")) move.y -= speed;
-
-  diver.position.add(move);
-  diver.position.x = THREE.MathUtils.clamp(diver.position.x, -9.5, 9.5);
-  diver.position.y = THREE.MathUtils.clamp(diver.position.y, -Infinity, 6.5);
-
-  world.depth += world.speed;
-  diver.position.y -= world.speed;
-
-  const swim = Math.sin(performance.now() * 0.01) * 0.1;
-  finL.rotation.y = swim;
-  finR.rotation.y = -swim;
-
-  point.position.copy(diver.position).add(new THREE.Vector3(2, 0.5, 0));
-  camera.position.x += (diver.position.x - camera.position.x) * 0.08;
-  camera.position.y += (diver.position.y + 2 - camera.position.y) * 0.08;
-  camera.lookAt(diver.position.x, diver.position.y, 0);
+function depthMult(depth) {
+  return 1 + (depth - 1) * 0.12;
 }
 
-function updateDanger() {
-  const t = THREE.MathUtils.clamp(world.depth / 240, 0, 1);
-  const bg = new THREE.Color().lerpColors(new THREE.Color(0x4ecbff), new THREE.Color(0x020611), t);
-  renderer.setClearColor(bg);
-
-  ambient.intensity = THREE.MathUtils.lerp(1.2, 0.12, t);
-  point.intensity = THREE.MathUtils.lerp(2.5, 0.5, t);
-  point.distance = THREE.MathUtils.lerp(25, 8, t);
-  scene.fog.density = THREE.MathUtils.lerp(0.012, 0.065, t);
-
-  const enemyCount = 5 + Math.floor(world.depth / 35);
-  while (world.enemies.length < enemyCount) spawnEnemy();
-
-  let danger = "Calm";
-  if (world.depth > 70) danger = "Uneasy";
-  if (world.depth > 150) danger = "Threatening";
-  if (world.depth > 230) danger = "Abyssal";
-
-  depthEl.textContent = `Depth: ${Math.floor(world.depth)}m`;
-  dangerEl.textContent = `Danger: ${danger}`;
+function drillCost() {
+  return Math.floor(15 * 1.55 ** (state.you.click - 1));
 }
 
-function updateEnemies() {
-  for (const enemy of world.enemies) {
-    const direction = new THREE.Vector3().subVectors(diver.position, enemy.position).normalize();
-    enemy.position.addScaledVector(direction, enemy.userData.speed);
-
-    enemy.rotation.y = Math.atan2(direction.x, direction.z);
-    enemy.rotation.z = -Math.PI / 2 + Math.sin(performance.now() * 0.002 + enemy.position.x) * 0.2;
-
-    if (enemy.position.distanceTo(diver.position) < 1.1) {
-      world.gameOver = true;
-    }
-
-    if (enemy.position.y > diver.position.y + 25) {
-      enemy.position.set((Math.random() - 0.5) * 18, diver.position.y - 20 - Math.random() * 15, (Math.random() - 0.5) * 12);
-    }
-  }
+function autoCost() {
+  return Math.floor(45 * 1.75 ** state.you.auto);
 }
 
-function updateParticles() {
-  particles.children.forEach((p) => {
-    p.position.y += 0.03;
-    if (p.position.y > diver.position.y + 30) {
-      p.position.y = diver.position.y - 36;
-      p.position.x = (Math.random() - 0.5) * 50;
-    }
+function depthCost() {
+  return Math.floor(120 * 2 ** (state.you.depth - 1));
+}
+
+function addBubble(text, role, detail = "") {
+  const b = document.createElement("article");
+  b.className = `bubble ${role}`;
+  b.innerHTML = `${text}${detail ? `<div class="hint">${detail}</div>` : ""}`;
+  el.chat.appendChild(b);
+  el.chat.scrollTop = el.chat.scrollHeight;
+}
+
+function classifyReply(input) {
+  const text = input.toLowerCase();
+  const supportive = ["you okay", "you ok", "here", "listen", "talk", "no pressure", "with you", "want to", "how are", "take a break", "i'm here", "you matter"];
+  const harmful = ["dramatic", "overreact", "not my problem", "shut up", "stop texting", "deal with it", "whatever", "toughen", "don't care"];
+  const avoidant = ["lol", "k", "anyway", "same", "brb", "idc", "cool"];
+
+  let score = 0;
+  supportive.forEach((w) => {
+    if (text.includes(w)) score += 2;
   });
+  harmful.forEach((w) => {
+    if (text.includes(w)) score -= 3;
+  });
+  avoidant.forEach((w) => {
+    if (text.includes(w)) score -= 1;
+  });
+  if (text.includes("?")) score += 1;
+  if (text.length < 3) score -= 1;
+
+  if (score >= 2) return { tone: "supportive", delta: 2 };
+  if (score <= -2) return { tone: "harmful", delta: -3 };
+  return { tone: "neutral", delta: 0 };
 }
 
-function gameOverScreen() {
-  messageEl.style.opacity = "1";
-  messageEl.innerHTML = `<div><strong>You were pulled into the dark.</strong><br/>Final depth: ${Math.floor(
-    world.depth
-  )}m<br/>Refresh to dive again.</div>`;
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function animate() {
-  requestAnimationFrame(animate);
+function maybeTriggerBeat() {
+  if (state.beat >= convoBeats.length) return;
+  const threshold = MILESTONES[state.beat];
+  if (state.you.salvage < threshold && state.rival.salvage < threshold) return;
 
-  if (!world.gameOver) {
-    updatePlayer();
-    updateDanger();
-    updateEnemies();
-    updateParticles();
+  const beat = convoBeats[state.beat];
+  el.phase.textContent = `Signal: ${beat.signal}`;
+  addBubble(`<strong>Teammate:</strong> ${beat.line}`, "char", beat.subtext);
+  state.beat += 1;
+}
+
+function maybeEnd() {
+  if (state.locked) return;
+  if (state.you.salvage < 500 && state.rival.salvage < 500) return;
+
+  state.locked = true;
+  el.composer.classList.add("hidden");
+  el.harvestBtn.disabled = true;
+  el.drillBtn.disabled = true;
+  el.autoBtn.disabled = true;
+  el.depthBtn.disabled = true;
+
+  const winner = state.you.salvage >= state.rival.salvage ? "You" : "Teammate";
+
+  el.result.classList.remove("hidden");
+  if (state.trust >= 6) {
+    el.result.innerHTML = `<strong>Co-op Ending</strong><div class="hint">${winner} won the salvage race, but your teammate finally says they were not fine and asks for real support after the run.</div>`;
+  } else if (state.trust >= 1) {
+    el.result.innerHTML = `<strong>Split Signal Ending</strong><div class="hint">${winner} won the run. You caught part of what was going on, but most of it stayed unsaid.</div>`;
   } else {
-    gameOverScreen();
+    el.result.innerHTML = `<strong>Surface-Only Ending</strong><div class="hint">${winner} won. The mission ended before trust did. Their "I'm fine" never opened up.</div>`;
+  }
+}
+
+function updateHud() {
+  el.youSalvage.textContent = `Salvage: ${state.you.salvage}`;
+  el.youDepth.textContent = `Depth: ${state.you.depth}`;
+  el.youClick.textContent = `Per click: ${Math.floor(state.you.click * depthMult(state.you.depth))}`;
+  el.youAuto.textContent = `Per sec: ${Math.floor(state.you.auto * depthMult(state.you.depth))}`;
+
+  el.rivalSalvage.textContent = `Salvage: ${state.rival.salvage}`;
+  el.rivalDepth.textContent = `Depth: ${state.rival.depth}`;
+  el.rivalRate.textContent = `Per sec: ${Math.floor(state.rival.auto * depthMult(state.rival.depth))}`;
+
+  el.drillBtn.textContent = `Drill +1/click (${drillCost()})`;
+  el.autoBtn.textContent = `Collector +1/sec (${autoCost()})`;
+  el.depthBtn.textContent = `Dive deeper (${depthCost()})`;
+}
+
+el.harvestBtn.addEventListener("click", () => {
+  if (state.locked) return;
+  state.you.salvage += Math.floor(state.you.click * depthMult(state.you.depth));
+  maybeTriggerBeat();
+  maybeEnd();
+  updateHud();
+});
+
+el.drillBtn.addEventListener("click", () => {
+  const cost = drillCost();
+  if (state.locked || state.you.salvage < cost) return;
+  state.you.salvage -= cost;
+  state.you.click += 1;
+  updateHud();
+});
+
+el.autoBtn.addEventListener("click", () => {
+  const cost = autoCost();
+  if (state.locked || state.you.salvage < cost) return;
+  state.you.salvage -= cost;
+  state.you.auto += 1;
+  updateHud();
+});
+
+el.depthBtn.addEventListener("click", () => {
+  const cost = depthCost();
+  if (state.locked || state.you.salvage < cost) return;
+  state.you.salvage -= cost;
+  state.you.depth += 1;
+  updateHud();
+});
+
+el.composer.addEventListener("submit", (event) => {
+  event.preventDefault();
+  if (state.locked) return;
+
+  const text = el.reply.value.trim();
+  if (!text) return;
+  el.reply.value = "";
+
+  addBubble(`<strong>You:</strong> ${text}`, "player");
+
+  if (state.beat === 0) {
+    addBubble("<strong>Teammate:</strong> got it.", "char");
+    return;
   }
 
-  renderer.render(scene, camera);
-}
-animate();
+  const beat = convoBeats[clamp(state.beat - 1, 0, convoBeats.length - 1)];
+  const read = classifyReply(text);
+  state.trust += read.delta;
 
-window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  setTimeout(() => {
+    if (read.tone === "supportive") {
+      addBubble(`<strong>Teammate:</strong> ${pick(beat.supportive)}`, "char");
+    } else if (read.tone === "harmful") {
+      addBubble(`<strong>Teammate:</strong> ${pick(beat.harmful)}`, "char");
+    } else {
+      addBubble(`<strong>Teammate:</strong> ${pick(beat.neutral)}`, "char");
+    }
+  }, 120);
 });
+
+let last = performance.now();
+function tick(now) {
+  const dt = (now - last) / 1000;
+  last = now;
+
+  if (!state.locked) {
+    state.you.bank += state.you.auto * depthMult(state.you.depth) * dt;
+    const youGain = Math.floor(state.you.bank);
+    if (youGain > 0) {
+      state.you.salvage += youGain;
+      state.you.bank -= youGain;
+    }
+
+    state.rival.bank += state.rival.auto * depthMult(state.rival.depth) * dt;
+    const rGain = Math.floor(state.rival.bank);
+    if (rGain > 0) {
+      state.rival.salvage += rGain;
+      state.rival.bank -= rGain;
+    }
+
+    if (Math.random() < 0.004) {
+      state.rival.depth += 1;
+    }
+    if (Math.random() < 0.006) {
+      state.rival.auto += 1;
+    }
+
+    maybeTriggerBeat();
+    maybeEnd();
+    updateHud();
+  }
+
+  requestAnimationFrame(tick);
+}
+
+addBubble(
+  "<strong>System:</strong> New co-op session started. First to 500 salvage wins the run. Keep comms open.",
+  "char"
+);
+addBubble("<strong>Teammate:</strong> ready when you are.", "char");
+updateHud();
+requestAnimationFrame(tick);
