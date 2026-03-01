@@ -3,164 +3,149 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Campfire Arcade</title>
+    <title>Beneath the Surface Arcade</title>
     <style>
-      :root { color-scheme: dark; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+      :root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; }
       * { box-sizing: border-box; }
-      body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 20% 20%, #2a2140 0%, #151024 45%, #0f0b17 100%); color: #f8f4ff; display: grid; place-items: center; padding: 16px; }
-      .app { width: min(1200px, 100%); border: 1px solid rgba(207,170,255,.35); border-radius: 18px; background: rgba(15,8,26,.94); overflow: hidden; box-shadow: 0 18px 50px rgba(0,0,0,.45); }
-      .header { padding: 14px 18px; border-bottom: 1px solid rgba(186,158,233,.25); }
-      .header h1 { margin: 0; font-size: clamp(1.15rem,2.3vw,1.6rem); }
-      .header p { margin: 6px 0 0; color: #d7c9ef; }
-
-      .menu { padding: 18px; display: grid; gap: 14px; }
-      .cards { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-      .card {
-        border: 1px solid rgba(220,201,248,.35); border-radius: 14px; background: rgba(255,255,255,.04);
-        padding: 12px; display: grid; gap: 10px;
-      }
-      .badge { display: inline-block; font-size: .75rem; padding: 3px 8px; border-radius: 999px; background: rgba(173,130,235,.25); border: 1px solid rgba(220,201,248,.35); color: #f2e8ff; }
-      .pixel-art { width: 100%; height: 120px; border-radius: 10px; border: 1px solid rgba(220,201,248,.3); image-rendering: pixelated; background: #1a1430; }
-      .card h3 { margin: 0; }
-      .card p { margin: 0; color: #dacff0; font-size: .92rem; }
-      .card button, .topbar button {
-        border: 1px solid rgba(220,201,248,.45); border-radius: 10px; background: rgba(173,130,235,.22);
-        color: #fff; padding: 9px 12px; cursor: pointer;
-      }
-
-      .hidden { display: none !important; }
-
-      .topbar { padding: 10px 14px; border-bottom: 1px solid rgba(186,158,233,.25); display: flex; justify-content: space-between; align-items: center; }
-      .topbar small { color: #d3c4ec; }
-
-      .gameWrap { min-height: 700px; }
-      .layout { display: grid; grid-template-columns: 1.05fr 1fr; min-height: 680px; }
-      .left { border-right: 1px solid rgba(186,158,233,.2); padding: 14px; }
-      .right { display: grid; grid-template-rows: auto 1fr auto; }
-      .board { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-      .panel { border: 1px solid rgba(220,201,248,.35); border-radius: 14px; background: rgba(255,255,255,.04); padding: 12px; }
-      .panel h2 { margin: 0 0 8px; font-size: 1.02rem; }
-      .stat { font-size: .94rem; margin: 3px 0; color: #e8def8; }
-      .hot { color: #ffe28f; }
-      .harvest { margin-top: 10px; width: 100%; border: 1px solid rgba(222,209,248,.46); border-radius: 12px; background: rgba(173,130,235,.25); color: #fff; font-size: .96rem; padding: 10px; cursor: pointer; }
-      .upgrades { margin-top: 10px; display: grid; gap: 8px; }
-      .upgrades button { border: 1px solid rgba(220,201,248,.38); border-radius: 10px; background: rgba(247,236,255,.08); color: #f7f0ff; padding: 8px; font-size: .9rem; text-align: left; cursor: pointer; }
-      .avatarBar { display: grid; grid-template-columns: 110px 1fr; gap: 10px; padding: 12px; border-bottom: 1px solid rgba(186,158,233,.25); align-items: center; }
-      #face { width: 96px; height: 96px; image-rendering: pixelated; border: 1px solid rgba(220,201,248,.35); border-radius: 8px; background: #151222; }
-      .avatarText { font-size: .92rem; color: #d9cff0; }
-      .chat { overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
-      .bubble { max-width: 88%; border-radius: 12px; padding: 10px 12px; line-height: 1.4; }
-      .char { align-self: flex-start; background: rgba(142,118,178,.25); border: 1px solid rgba(195,164,242,.35); }
-      .player { align-self: flex-end; background: rgba(80,164,149,.22); border: 1px solid rgba(134,224,207,.35); }
-      .hint { margin-top: 5px; font-size: .84rem; color: #d4c7eb; opacity: .88; }
-      .composer { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 12px; border-top: 1px solid rgba(186,158,233,.25); }
-      input { border: 1px solid rgba(220,201,248,.45); border-radius: 12px; background: rgba(247,236,255,.08); color: #f7f0ff; padding: 10px 12px; font-size: .96rem; }
-      .send { border: 1px solid rgba(220,201,248,.45); border-radius: 12px; background: rgba(173,130,235,.22); color: #fff; padding: 10px 14px; cursor: pointer; }
-      .ending { margin-top: 10px; border-radius: 12px; padding: 10px 12px; border: 1px solid rgba(220,201,248,.32); background: rgba(255,255,255,.04); }
-
-      .remoteWrap { min-height: 700px; display: grid; grid-template-rows: auto 1fr; }
-      .remotePanel {
-        margin: 18px;
-        border: 1px solid rgba(220,201,248,.32);
-        border-radius: 14px;
-        background: rgba(255,255,255,.04);
-        padding: 16px;
+      body {
+        margin: 0;
+        min-height: 100vh;
         display: grid;
-        gap: 10px;
-        align-content: start;
+        place-items: center;
+        padding: 16px;
+        background: radial-gradient(circle at 20% 20%, #2b2240 0%, #161028 48%, #0e0b17 100%);
+        color: #f8f4ff;
       }
-      .linkBtn {
-        width: fit-content;
-        border: 1px solid rgba(220,201,248,.45);
+      .app {
+        width: min(1240px, 100%);
+        background: rgba(13, 8, 22, 0.95);
+        border: 1px solid rgba(197, 160, 240, 0.35);
+        border-radius: 18px;
+        overflow: hidden;
+      }
+      .header { padding: 14px 18px; border-bottom: 1px solid rgba(186, 158, 233, 0.25); }
+      .header h1 { margin: 0; font-size: clamp(1.2rem, 2.4vw, 1.6rem); }
+      .header p { margin: 6px 0 0; color: #d8caee; }
+
+      .menu { padding: 16px; display: grid; gap: 14px; }
+      .cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+      .card {
+        border: 1px solid rgba(220, 201, 248, 0.35);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.04);
+        padding: 12px;
+        display: grid;
+        gap: 8px;
+      }
+      .pixel-thumb { width: 100%; height: 120px; border-radius: 8px; image-rendering: pixelated; background: #1b1430; border: 1px solid rgba(220, 201, 248, 0.28); }
+      .card h3 { margin: 0; }
+      .card p { margin: 0; color: #d8ccee; font-size: 0.92rem; }
+      .badge { width: fit-content; font-size: 0.76rem; padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(220, 201, 248, 0.35); background: rgba(173, 130, 235, 0.2); }
+      button {
+        border: 1px solid rgba(220, 201, 248, 0.45);
         border-radius: 10px;
-        background: rgba(173,130,235,.22);
+        background: rgba(173, 130, 235, 0.22);
         color: #fff;
         padding: 9px 12px;
         cursor: pointer;
       }
 
-      @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } .left { border-right: none; border-bottom: 1px solid rgba(186,158,233,.2); } }
+      .hidden { display: none !important; }
+
+      .gameView { min-height: 720px; display: grid; grid-template-rows: auto 1fr; }
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 14px;
+        border-bottom: 1px solid rgba(186, 158, 233, 0.25);
+      }
+      .topbar small { color: #dacdf0; }
+
+      .layout { display: grid; grid-template-columns: 1.15fr 0.85fr; min-height: 660px; }
+      .playZone { padding: 14px; border-right: 1px solid rgba(186, 158, 233, 0.2); display: grid; gap: 10px; align-content: start; }
+      .chatZone { display: grid; grid-template-rows: auto 1fr auto; }
+
+      .panel { border: 1px solid rgba(220, 201, 248, 0.35); border-radius: 12px; background: rgba(255, 255, 255, 0.04); padding: 10px; }
+      .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+      .stat { color: #e8def8; font-size: 0.93rem; }
+
+      #oceanCanvas { width: 100%; max-width: 760px; height: 330px; image-rendering: pixelated; border: 1px solid rgba(220, 201, 248, 0.35); border-radius: 10px; background: #0f1d35; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; }
+
+      .avatarRow { padding: 10px 12px; border-bottom: 1px solid rgba(186, 158, 233, 0.25); display: grid; grid-template-columns: 100px 1fr; gap: 10px; align-items: center; }
+      #botFace { width: 88px; height: 88px; image-rendering: pixelated; background: #171327; border: 1px solid rgba(220, 201, 248, 0.35); border-radius: 8px; }
+      #botMood { color: #d8cdee; font-size: 0.92rem; }
+      .chat { overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+      .bubble { max-width: 86%; border-radius: 10px; padding: 8px 10px; line-height: 1.4; }
+      .bot { align-self: flex-start; background: rgba(142, 118, 178, 0.24); border: 1px solid rgba(195, 164, 242, 0.35); }
+      .you { align-self: flex-end; background: rgba(78, 165, 145, 0.2); border: 1px solid rgba(134, 224, 207, 0.35); }
+      .composer { border-top: 1px solid rgba(186, 158, 233, 0.25); display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 10px; }
+      input { border: 1px solid rgba(220, 201, 248, 0.45); border-radius: 10px; background: rgba(247, 236, 255, 0.08); color: #fff; padding: 10px; }
+
+      @media (max-width: 980px) {
+        .layout { grid-template-columns: 1fr; }
+        .playZone { border-right: none; border-bottom: 1px solid rgba(186, 158, 233, 0.2); }
+      }
     </style>
   </head>
   <body>
     <main class="app">
       <header class="header">
-        <h1>🔥 Campfire Arcade</h1>
-        <p>Pick a game mode: local clicker-chat or the linked Campfire game.</p>
+        <h1>🕹️ Beneath the Surface Arcade</h1>
+        <p>3 jam games, each multiplayer with a bot teammate you can chat with.</p>
       </header>
 
       <section id="menu" class="menu">
         <div class="cards">
           <article class="card">
-            <canvas id="menuPixel1" class="pixel-art" width="160" height="80"></canvas>
-            <span class="badge">Local • Non‑AI pixel art</span>
-            <h3>Beneath the Surface: Meme Marathon</h3>
-            <p>Long clicker race + chat story, with handcrafted pixel face and meme checkpoints.</p>
-            <button id="playLocalBtn">Play Local Mode</button>
+            <canvas id="thumbOcean" class="pixel-thumb" width="180" height="90"></canvas>
+            <span class="badge">Game 3</span>
+            <h3>Into the Deep</h3>
+            <p>Dive deeper while racing a bot diver. Darkness and enemies rise below the surface.</p>
+            <button data-mode="ocean" class="playBtn">Play Ocean Game</button>
           </article>
-
           <article class="card">
-            <canvas id="menuPixel2" class="pixel-art" width="160" height="80"></canvas>
-            <span class="badge">Web Link</span>
-            <h3>Campfire External Game</h3>
-            <p>Launch the linked Vercel game inside this arcade view.</p>
-            <button id="playRemoteBtn">Open Linked Game</button>
+            <canvas id="thumbDig" class="pixel-thumb" width="180" height="90"></canvas>
+            <span class="badge">Game 5</span>
+            <h3>Beneath the Dirt</h3>
+            <p>Dig through layers, reveal hidden truths, and compete with a bot excavator.</p>
+            <button data-mode="dig" class="playBtn">Play Digging Game</button>
+          </article>
+          <article class="card">
+            <canvas id="thumbChat" class="pixel-thumb" width="180" height="90"></canvas>
+            <span class="badge">Game 7</span>
+            <h3>Read Between the Lines</h3>
+            <p>Chat story battle: can you notice feelings beneath “I’m fine” before the bot clocks out?</p>
+            <button data-mode="chat" class="playBtn">Play Chat Game</button>
           </article>
         </div>
       </section>
 
-      <section id="localGame" class="gameWrap hidden">
-        <div class="topbar"><small>Mode: Local Clicker Chat</small><button id="backFromLocal">← Back to game menu</button></div>
-        <section class="layout">
-          <section class="left">
-            <div class="board">
-              <article class="panel">
-                <h2>You</h2>
-                <div class="stat" id="youSalvage">Salvage: 0</div>
-                <div class="stat" id="youDepth">Depth: 1</div>
-                <div class="stat" id="youClick">Per click: 1</div>
-                <div class="stat" id="youAuto">Per sec: 0</div>
-                <div class="stat hot" id="combo">Combo: x1.00</div>
-                <div class="stat hot" id="boost">Boost: none</div>
-                <button id="harvestBtn" class="harvest">HARVEST</button>
-                <div class="upgrades">
-                  <button id="drillBtn">Drill +1/click (15)</button>
-                  <button id="autoBtn">Collector +1/sec (45)</button>
-                  <button id="depthBtn">Dive deeper (120)</button>
-                </div>
-              </article>
-              <article class="panel">
-                <h2>Teammate (online)</h2>
-                <div class="stat" id="rivalSalvage">Salvage: 0</div>
-                <div class="stat" id="rivalDepth">Depth: 1</div>
-                <div class="stat" id="rivalRate">Per sec: 1</div>
-                <div class="stat" id="phase">Signal: vibing</div>
-                <div class="ending hidden" id="result"></div>
-              </article>
-            </div>
+      <section id="gameView" class="gameView hidden">
+        <div class="topbar">
+          <small id="modeTitle">Mode</small>
+          <button id="backBtn">← Back to menu</button>
+        </div>
+        <div class="layout">
+          <section class="playZone">
+            <div id="summary" class="panel"></div>
+            <div id="stats" class="panel stats"></div>
+            <canvas id="oceanCanvas" width="760" height="330"></canvas>
+            <div id="controls" class="panel controls"></div>
+            <div id="status" class="panel"></div>
           </section>
-          <section class="right">
-            <section class="avatarBar">
-              <canvas id="face" width="32" height="32" aria-label="pixel teammate face"></canvas>
-              <div class="avatarText" id="avatarText">Teammate cam online.</div>
-            </section>
-            <section id="chat" class="chat" aria-live="polite"></section>
+          <section class="chatZone">
+            <div class="avatarRow">
+              <canvas id="botFace" width="32" height="32" aria-label="pixel bot face"></canvas>
+              <div id="botMood">Bot mood feed online.</div>
+            </div>
+            <div id="chat" class="chat" aria-live="polite"></div>
             <form id="composer" class="composer" autocomplete="off">
-              <input id="reply" placeholder="Type to teammate..." />
-              <button class="send" type="submit">Send</button>
+              <input id="msgInput" placeholder="Message your bot teammate..." />
+              <button type="submit">Send</button>
             </form>
           </section>
-        </section>
-      </section>
-
-      <section id="remoteGame" class="remoteWrap hidden">
-        <div class="topbar"><small>Mode: External linked game</small><button id="backFromRemote">← Back to game menu</button></div>
-        <div class="remotePanel">
-          <h3 style="margin:0;">External Campfire game</h3>
-          <p style="margin:0;color:#daccf0;">This Vercel project blocks iframe embedding (`X-Frame-Options: deny`), so it can’t be shown inside this page.</p>
-          <p style="margin:0;color:#daccf0;">Use the button below to open it directly in a new tab.</p>
-          <button id="openRemoteTab" class="linkBtn">Open Campfire Vercel Project ↗</button>
-          <a href="https://campfire-7ioxgkuxz-ahackvs-projects.vercel.app/" target="_blank" rel="noopener noreferrer" style="color:#eed8ff;">Direct link: campfire-7ioxgkuxz-ahackvs-projects.vercel.app</a>
         </div>
       </section>
     </main>
