@@ -118,7 +118,7 @@ function ensureAudioCtx() {
     if (!Ctx) return null;
     audioCtx = new Ctx();
     musicMasterGain = audioCtx.createGain();
-    musicMasterGain.gain.value = 0.22;
+    musicMasterGain.gain.value = 0.3;
     musicMasterGain.connect(audioCtx.destination);
   }
   return audioCtx;
@@ -1014,38 +1014,40 @@ function renderOnlyUp() {
 
   if (!u.over) {
     const starter = u.platforms[0];
-    if (u.spawnLock > 0) {
+    const inSpawnLock = u.spawnLock > 0;
+    if (inSpawnLock) {
       u.spawnLock -= 1;
-      if (!left && !right && !jumpHeld) {
-        const py = starter.y + Math.sin(Date.now() * 0.002 + starter.bob) * (starter.bobAmp ?? 2);
-        u.x = starter.x + starter.w * 0.5;
-        u.y = py - 12;
-        u.vx = 0;
-        u.vy = 0;
-        u.grounded = true;
-        u.coyote = 8;
-      }
+      const py = starter.y + Math.sin(Date.now() * 0.002 + starter.bob) * (starter.bobAmp ?? 2);
+      u.x = starter.x + starter.w * 0.5;
+      u.y = py - 12;
+      u.vx = 0;
+      u.vy = 0;
+      u.grounded = true;
+      u.coyote = 8;
+      u.jumpBuffer = 0;
     }
+
     if (jumpHeld) u.jumpBuffer = 7;
     else u.jumpBuffer = Math.max(0, u.jumpBuffer - 1);
 
-    if (left) u.vx -= 0.42;
-    if (right) u.vx += 0.42;
-    u.vx *= 0.9;
-    u.vx = Math.max(-5.2, Math.min(5.2, u.vx));
+    if (!inSpawnLock || left || right || jumpHeld) {
+      if (left) u.vx -= 0.42;
+      if (right) u.vx += 0.42;
+      u.vx *= 0.9;
+      u.vx = Math.max(-5.2, Math.min(5.2, u.vx));
 
-    const canJump = u.coyote > 0 || u.grounded;
-    if (u.jumpBuffer > 0 && canJump) {
-      u.vy = -9.8;
-      u.jumpBuffer = 0;
-      u.coyote = 0;
-      u.grounded = false;
-    }
+      const canJump = u.coyote > 0 || u.grounded;
+      if (u.jumpBuffer > 0 && canJump) {
+        u.vy = -9.8;
+        u.jumpBuffer = 0;
+        u.coyote = 0;
+        u.grounded = false;
+      }
 
-    u.vy += 0.36;
-    const prevY = u.y;
-    u.x += u.vx;
-    u.y += u.vy;
+      u.vy += 0.36;
+      const prevY = u.y;
+      u.x += u.vx;
+      u.y += u.vy;
 
     if (u.x < 10) { u.x = 10; u.vx = 0; }
     if (u.x > 750) { u.x = 750; u.vx = 0; }
@@ -1087,6 +1089,7 @@ function renderOnlyUp() {
         u.maxCombo = Math.max(u.maxCombo, u.combo);
       }
     });
+    }
 
     const heightNow = Math.max(0, 300 - u.y);
     u.bestHeight = Math.max(u.bestHeight, heightNow);
