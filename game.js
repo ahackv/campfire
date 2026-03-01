@@ -1,11 +1,9 @@
 const MODES = [
-  { id: "normal", title: "🎭 Normal Life", summary: "Do chores, trigger mini-events, and keep your hidden stress from breaking through.", controls: "Work / Rest / Help Friend" },
-  { id: "iceberg", title: "🧠 Iceberg Clicker", summary: "Reveal layers, buy scans, and race a bot to the deepest truth.", controls: "Reveal / Sonar / Speed Dig" },
-  { id: "ocean", title: "🌊 Into the Deep", summary: "Swim through hazards, collect pearls, and beat the bot depth score.", controls: "Arrows/WASD + Dash" },
-  { id: "emotion", title: "😃 Emotion Mask", summary: "Balance the public mask and private pressure with active cooldown skills.", controls: "Mask / Breathe / Journal" },
-  { id: "dig", title: "⛏️ Beneath the Dirt", summary: "Dig relic chains, uncover truths, and use boosts before the bot finishes.", controls: "Dig / Truth / Drill Boost" },
-  { id: "mirror", title: "🪞 Mirror World", summary: "Survive dual-world movement, dodge mirror traps, and reach the exit first.", controls: "Arrows/WASD + Phase Shift" },
-  { id: "external", title: "🔗 Campfire External", summary: "Open the linked Vercel project directly in a new tab.", controls: "Open Link" },
+  { id: "ocean", title: "🌊 Into the Deep", summary: "Dive race with hazards, pearls, and dash timing." },
+  { id: "emotion", title: "😃 Emotion Mask", summary: "Balance visible calm against hidden pressure." },
+  { id: "dig", title: "⛏️ Beneath the Dirt", summary: "Dig layers, collect relics, and surface truths." },
+  { id: "mirror", title: "🪞 Mirror World", summary: "Move in dual worlds and avoid hidden traps." },
+  { id: "trident", title: "🔱 Trident Duel", summary: "Turn-based physics throws. Arc your shot to hit the bot." },
 ];
 
 const el = {
@@ -34,12 +32,20 @@ const state = {
   mode: null,
   running: false,
   trust: 0,
-  normal: { progress: 0, bot: 0, glitch: 0, streak: 0 },
-  iceberg: { depth: 0, bot: 0, coins: 0, revealPower: 1, layers: ["memes", "rumors", "drama", "secrets", "fear", "truth"] },
   ocean: { x: 370, y: 160, depth: 0, botDepth: 0, hp: 4, pearls: 0, dash: 0, enemies: [], pearlsMap: [] },
   emotion: { mask: 50, hidden: 20, botMask: 52, botHidden: 18, calm: 3, journal: 2 },
-  dig: { layer: 0, botLayer: 0, truths: 0, boost: 0, finds: ["soil", "coins", "bones", "locket", "letter", "fear", "truth"] },
+  dig: { layer: 0, botLayer: 0, truths: 0, boost: 0, finds: ["soil", "coins", "bones", "locket", "letter", "fear", "truth"], relics: 0 },
   mirror: { x: 70, mirrorX: 70, botX: 75, goal: 700, phase: 2, phaseTimer: 0, traps: [220, 340, 510], mirrorNoise: 0 },
+  trident: {
+    youHP: 3,
+    botHP: 3,
+    turn: "you",
+    aimAngle: 42,
+    aimPower: 15,
+    projectile: null,
+    wind: 0,
+    cooldown: 0,
+  },
 };
 
 let mouthOpen = false;
@@ -102,17 +108,19 @@ function stat(label, value) {
 
 function drawThumb(canvas, seed) {
   const c = canvas.getContext("2d");
-  c.fillStyle = ["#1d1533", "#12283e", "#3a2816"][seed % 3];
+  c.fillStyle = ["#10283d", "#2d2347", "#3a2816", "#202b3d", "#2e1b29"][seed % 5];
   c.fillRect(0, 0, canvas.width, canvas.height);
-  for (let i = 0; i < 55; i++) {
+  for (let i = 0; i < 70; i++) {
     c.fillStyle = i % 2 ? "#6f57a0" : "#3b2a59";
-    c.fillRect((i * 17) % canvas.width, 62 + (i % 8), 4, 2);
+    c.fillRect((i * 17) % canvas.width, 55 + (i % 12), 4, 2);
   }
   c.fillStyle = "#f4d4be";
   c.fillRect(14, 20, 18, 16);
   c.fillStyle = "#191522";
   c.fillRect(18, 25, 2, 2);
   c.fillRect(25, 25, 2, 2);
+  c.fillStyle = "#86eaff";
+  c.fillRect(130, 20, 30, 30);
 }
 
 function makeCards() {
@@ -120,7 +128,7 @@ function makeCards() {
   MODES.forEach((m, i) => {
     const card = document.createElement("article");
     card.className = "card";
-    card.innerHTML = `<canvas class="thumb" width="180" height="90"></canvas><span class="badge">Option ${i + 1}</span><h3>${m.title}</h3><p>${m.summary}</p><button>Play</button>`;
+    card.innerHTML = `<canvas class="thumb" width="180" height="90"></canvas><span class="badge">Top Pick ${i + 1}</span><h3>${m.title}</h3><p>${m.summary}</p><button>Play</button>`;
     drawThumb(card.querySelector("canvas"), i);
     card.querySelector("button").addEventListener("click", () => startMode(m.id));
     el.cards.appendChild(card);
@@ -137,12 +145,8 @@ function clearGameUI() {
 function spawnOceanEntities() {
   state.ocean.enemies = [];
   state.ocean.pearlsMap = [];
-  for (let i = 0; i < 7; i++) {
-    state.ocean.enemies.push({ x: Math.random() * 730 + 10, y: Math.random() * 320 + 8, vx: (Math.random() - 0.5) * 2.4 });
-  }
-  for (let i = 0; i < 6; i++) {
-    state.ocean.pearlsMap.push({ x: Math.random() * 720 + 20, y: Math.random() * 300 + 20, taken: false });
-  }
+  for (let i = 0; i < 8; i++) state.ocean.enemies.push({ x: Math.random() * 730 + 10, y: Math.random() * 320 + 8, vx: (Math.random() - 0.5) * 2.4 });
+  for (let i = 0; i < 7; i++) state.ocean.pearlsMap.push({ x: Math.random() * 720 + 20, y: Math.random() * 300 + 20, taken: false });
 }
 
 function setupMode(id) {
@@ -152,50 +156,14 @@ function setupMode(id) {
   const m = MODES.find((x) => x.id === id);
   el.modeTitle.textContent = m.title;
   el.summary.textContent = m.summary;
-
-  if (id === "external") {
-    el.canvas.classList.add("hidden");
-    el.controls.innerHTML = `<a class="linkBtn" href="https://campfire-7ioxgkuxz-ahackvs-projects.vercel.app/" target="_blank" rel="noopener noreferrer">Open Campfire Vercel Project ↗</a>`;
-    el.status.textContent = "External mode opens in a new tab because embedding is blocked by that site.";
-    addBubble("I can’t run that one inside the frame, but this link opens it directly.");
-    return;
-  }
-
   el.canvas.classList.remove("hidden");
-
-  if (id === "normal") {
-    state.normal = { progress: 0, bot: 0, glitch: 0, streak: 0 };
-    el.controls.innerHTML = '<button id="workBtn">Work</button><button id="restBtn">Rest</button><button id="helpBtn">Help Friend</button>';
-    document.getElementById("workBtn").onclick = () => { state.normal.progress += 8 + state.normal.streak; state.normal.glitch += 3; state.normal.streak = Math.min(12, state.normal.streak + 1); };
-    document.getElementById("restBtn").onclick = () => { state.normal.glitch = Math.max(0, state.normal.glitch - 8); state.normal.streak = Math.max(0, state.normal.streak - 2); };
-    document.getElementById("helpBtn").onclick = () => { state.trust += 1; state.normal.glitch = Math.max(0, state.normal.glitch - 5); addBubble("Good call. Helping others lowers hidden pressure."); };
-    addBubble("Let's keep normal life stable while glitches try to break through.");
-  }
-
-  if (id === "iceberg") {
-    state.iceberg = { depth: 0, bot: 0, coins: 0, revealPower: 1, layers: ["memes", "rumors", "drama", "secrets", "fear", "truth"] };
-    el.controls.innerHTML = '<button id="revealBtn">Reveal</button><button id="sonarBtn">Buy Sonar (3)</button><button id="speedBtn">Buy Speed Dig (5)</button>';
-    document.getElementById("revealBtn").onclick = () => {
-      state.iceberg.depth = Math.min(state.iceberg.layers.length - 1, state.iceberg.depth + state.iceberg.revealPower);
-      state.iceberg.coins += 1;
-    };
-    document.getElementById("sonarBtn").onclick = () => {
-      if (state.iceberg.coins >= 3) { state.iceberg.coins -= 3; state.iceberg.depth = Math.min(state.iceberg.layers.length - 1, state.iceberg.depth + 2); }
-    };
-    document.getElementById("speedBtn").onclick = () => {
-      if (state.iceberg.coins >= 5) { state.iceberg.coins -= 5; state.iceberg.revealPower = Math.min(3, state.iceberg.revealPower + 1); }
-    };
-    addBubble("We'll race to the bottom. Upgrade your reveal tools.");
-  }
 
   if (id === "ocean") {
     state.ocean = { x: 370, y: 160, depth: 0, botDepth: 0, hp: 4, pearls: 0, dash: 0, enemies: [], pearlsMap: [] };
     spawnOceanEntities();
     el.controls.innerHTML = '<button id="dashBtn">Dash Burst</button><span class="stat">Move: arrows / WASD</span>';
-    document.getElementById("dashBtn").onclick = () => {
-      if (state.ocean.dash <= 0) state.ocean.dash = 80;
-    };
-    addBubble("Race me to depth 500, collect pearls, and avoid shadow fish.");
+    document.getElementById("dashBtn").onclick = () => { if (state.ocean.dash <= 0) state.ocean.dash = 80; };
+    addBubble("Race me to depth 500, collect pearls, and dodge shadow fish.");
   }
 
   if (id === "emotion") {
@@ -204,20 +172,21 @@ function setupMode(id) {
     document.getElementById("maskBtn").onclick = () => { state.emotion.mask = Math.min(100, state.emotion.mask + 8); state.emotion.hidden = Math.min(100, state.emotion.hidden + 6); };
     document.getElementById("breatheBtn").onclick = () => { if (state.emotion.calm > 0) { state.emotion.calm -= 1; state.emotion.hidden = Math.max(0, state.emotion.hidden - 12); } };
     document.getElementById("journalBtn").onclick = () => { if (state.emotion.journal > 0) { state.emotion.journal -= 1; state.emotion.hidden = Math.max(0, state.emotion.hidden - 18); state.trust += 1; } };
-    addBubble("Keep the visible mask stable, but don't ignore hidden pressure.");
+    addBubble("Keep the mask stable, but don't ignore hidden pressure.");
   }
 
   if (id === "dig") {
-    state.dig = { layer: 0, botLayer: 0, truths: 0, boost: 0, finds: ["soil", "coins", "bones", "locket", "letter", "fear", "truth"] };
+    state.dig = { layer: 0, botLayer: 0, truths: 0, boost: 0, finds: ["soil", "coins", "bones", "locket", "letter", "fear", "truth"], relics: 0 };
     el.controls.innerHTML = '<button id="digBtn">Dig</button><button id="truthBtn">Truth</button><button id="boostBtn">Drill Boost</button>';
     document.getElementById("digBtn").onclick = () => {
       const step = state.dig.boost > 0 ? 2 : 1;
       state.dig.layer = Math.min(state.dig.finds.length - 1, state.dig.layer + step);
+      state.dig.relics += step;
       addBubble(`Found: ${state.dig.finds[state.dig.layer]}`, "you");
     };
     document.getElementById("truthBtn").onclick = () => { state.dig.truths = Math.min(4, state.dig.truths + 1); state.trust += 1; };
     document.getElementById("boostBtn").onclick = () => { state.dig.boost = 220; };
-    addBubble("Dig race started. Use boost windows to surge ahead.");
+    addBubble("Dig race started. Chain relic finds before the bot does.");
   }
 
   if (id === "mirror") {
@@ -226,6 +195,50 @@ function setupMode(id) {
     document.getElementById("phaseBtn").onclick = () => { if (state.mirror.phase > 0) { state.mirror.phase -= 1; state.mirror.phaseTimer = 140; } };
     addBubble("Watch both worlds. Phase Shift lets you ghost through traps briefly.");
   }
+
+  if (id === "trident") {
+    state.trident = { youHP: 3, botHP: 3, turn: "you", aimAngle: 42, aimPower: 15, projectile: null, wind: (Math.random() - 0.5) * 0.12, cooldown: 0 };
+    el.controls.innerHTML = '<button id="angleUp">Angle +</button><button id="angleDown">Angle -</button><button id="powerUp">Power +</button><button id="powerDown">Power -</button><button id="throwBtn">Throw Trident</button>';
+    document.getElementById("angleUp").onclick = () => state.trident.aimAngle = Math.min(80, state.trident.aimAngle + 2);
+    document.getElementById("angleDown").onclick = () => state.trident.aimAngle = Math.max(8, state.trident.aimAngle - 2);
+    document.getElementById("powerUp").onclick = () => state.trident.aimPower = Math.min(28, state.trident.aimPower + 1);
+    document.getElementById("powerDown").onclick = () => state.trident.aimPower = Math.max(8, state.trident.aimPower - 1);
+    document.getElementById("throwBtn").onclick = () => tryThrowTrident();
+    addBubble("Turn duel started. Set angle + power, then throw.");
+  }
+}
+
+function tryThrowTrident() {
+  const t = state.trident;
+  if (state.mode !== "trident" || t.projectile || t.turn !== "you" || t.youHP <= 0 || t.botHP <= 0) return;
+  const rad = (t.aimAngle * Math.PI) / 180;
+  t.projectile = {
+    x: 95,
+    y: 240,
+    vx: Math.cos(rad) * t.aimPower * 0.55,
+    vy: -Math.sin(rad) * t.aimPower * 0.55,
+    owner: "you",
+  };
+  t.turn = "bot";
+  addBubble(`You throw at ${t.aimAngle}° / power ${t.aimPower}.`, "you");
+}
+
+function botThrow() {
+  const t = state.trident;
+  if (t.projectile || t.turn !== "bot" || t.youHP <= 0 || t.botHP <= 0 || t.cooldown > 0) return;
+  const baseAngle = 180 - (34 + Math.random() * 20);
+  const rad = (baseAngle * Math.PI) / 180;
+  const power = 12 + Math.random() * 10;
+  t.projectile = {
+    x: 665,
+    y: 240,
+    vx: Math.cos(rad) * power * 0.55,
+    vy: -Math.sin(rad) * power * 0.55,
+    owner: "bot",
+  };
+  t.turn = "you";
+  t.cooldown = 55;
+  addBubble("Bot throws a trident.");
 }
 
 function startMode(id) {
@@ -254,68 +267,10 @@ el.composer.addEventListener("submit", (e) => {
   setTimeout(() => addBubble(botReply(msg)), 120);
 });
 
-function renderNormal() {
-  const g = state.normal;
-  g.bot += 0.45 + Math.random() * 0.55;
-  g.glitch = Math.min(100, g.glitch + 0.14);
-
-  const tint = Math.min(180, g.glitch * 1.3);
-  ctx.fillStyle = `rgb(${35 + tint}, ${35 + tint * 0.2}, ${60 + tint * 0.1})`;
-  ctx.fillRect(0, 0, 760, 340);
-  ctx.fillStyle = "#8de6ff";
-  ctx.fillRect(90, 90, 160, 120);
-  if (g.glitch > 25) {
-    ctx.fillStyle = "#ff5f8b";
-    for (let i = 0; i < 9; i++) ctx.fillRect(65 + i * 78, 60 + (i % 3) * 62, 26, 7);
-  }
-
-  el.stats.innerHTML = "";
-  el.stats.append(stat("Your progress", Math.floor(g.progress)));
-  el.stats.append(stat("Bot progress", Math.floor(g.bot)));
-  el.stats.append(stat("Glitch", Math.floor(g.glitch)));
-  el.stats.append(stat("Task streak", g.streak));
-  el.stats.append(stat("Trust", state.trust));
-
-  if (g.glitch >= 95) el.status.textContent = "Surface cracked. Hidden stress took over this round.";
-  else if (g.progress >= 280 || g.bot >= 280) el.status.textContent = g.progress >= g.bot ? "You completed the day first." : "Bot finished the day first.";
-  else el.status.textContent = "Work builds progress, but too much pressure increases glitches.";
-}
-
-function renderIceberg() {
-  const i = state.iceberg;
-  if (Math.random() < 0.03) i.bot = Math.min(i.layers.length - 1, i.bot + 1);
-
-  ctx.fillStyle = "#10324e";
-  ctx.fillRect(0, 0, 760, 340);
-  ctx.fillStyle = "#d8edff";
-  ctx.beginPath();
-  ctx.moveTo(300, 70); ctx.lineTo(430, 70); ctx.lineTo(505, 150); ctx.lineTo(225, 150); ctx.fill();
-  ctx.fillStyle = "#8db8e6";
-  ctx.fillRect(180, 150, 370, 135);
-
-  ctx.fillStyle = "#f6fbff";
-  ctx.fillText(`You: ${i.layers[i.depth]}`, 20, 28);
-  ctx.fillText(`Bot: ${i.layers[i.bot]}`, 20, 50);
-
-  el.stats.innerHTML = "";
-  el.stats.append(stat("Your layer", i.depth));
-  el.stats.append(stat("Bot layer", i.bot));
-  el.stats.append(stat("Coins", i.coins));
-  el.stats.append(stat("Reveal power", i.revealPower));
-  el.stats.append(stat("Trust", state.trust));
-
-  if (i.depth >= i.layers.length - 1 || i.bot >= i.layers.length - 1) {
-    el.status.textContent = i.depth >= i.bot ? "You reached the hidden bottom first." : "Bot reached the truth first.";
-  } else {
-    el.status.textContent = "Reveal, buy sonar, and upgrade speed to beat the bot.";
-  }
-}
-
 function renderOcean() {
   const o = state.ocean;
   let speed = 3;
   if (o.dash > 0) { speed = 6; o.dash -= 1; }
-
   if (keys.has("arrowleft") || keys.has("a")) o.x -= speed;
   if (keys.has("arrowright") || keys.has("d")) o.x += speed;
   if (keys.has("arrowup") || keys.has("w")) o.y -= speed;
@@ -325,7 +280,9 @@ function renderOcean() {
 
   o.botDepth += 0.7 + Math.random() * 1.15;
   const dark = Math.min(220, o.depth * 0.5);
-  ctx.fillStyle = `rgb(10, ${85 - dark * 0.25}, ${145 - dark * 0.45})`;
+  const g = Math.max(8, 85 - dark * 0.25);
+  const b = Math.max(20, 145 - dark * 0.45);
+  ctx.fillStyle = `rgb(10, ${g}, ${b})`;
   ctx.fillRect(0, 0, 760, 340);
 
   o.enemies.forEach((en) => {
@@ -357,7 +314,7 @@ function renderOcean() {
 
   if (o.hp <= 0) el.status.textContent = "You got caught by shadow fish.";
   else if (o.depth >= 500 || o.botDepth >= 500) el.status.textContent = o.depth >= o.botDepth ? "You win the depth race." : "Bot wins this dive.";
-  else el.status.textContent = "Collect pearls for bonus fun and use Dash Burst to dodge.";
+  else el.status.textContent = "Collect pearls for score and use Dash Burst to dodge.";
 }
 
 function renderEmotion() {
@@ -407,6 +364,7 @@ function renderDig() {
   el.stats.append(stat("Your layer", d.layer));
   el.stats.append(stat("Bot layer", d.botLayer));
   el.stats.append(stat("Truths", d.truths));
+  el.stats.append(stat("Relics", d.relics));
   el.stats.append(stat("Boost active", d.boost > 0 ? "yes" : "no"));
   el.stats.append(stat("Trust", state.trust));
   el.status.textContent = `Find: ${d.finds[d.layer]} | Truth: ${truths.slice(0, d.truths).join(" / ") || "none"}`;
@@ -448,17 +406,92 @@ function renderMirror() {
 
   if (hitTrap) el.status.textContent = "Mirror self hit a trap.";
   else if (m.x >= m.goal || m.botX >= m.goal) el.status.textContent = m.x >= m.botX ? "You escaped both worlds." : "Bot escaped first.";
-  else el.status.textContent = "Use Phase Shift to pass through trap zones safely.";
+  else el.status.textContent = "Use Phase Shift to pass trap zones safely.";
+}
+
+function renderTrident() {
+  const t = state.trident;
+  ctx.fillStyle = "#2d1b2a";
+  ctx.fillRect(0, 0, 760, 340);
+
+  ctx.fillStyle = "#3c6a91";
+  ctx.fillRect(0, 260, 760, 80);
+
+  // players
+  ctx.fillStyle = "#7de8ff";
+  ctx.fillRect(70, 220, 26, 40);
+  ctx.fillStyle = "#ff9db5";
+  ctx.fillRect(665, 220, 26, 40);
+
+  // aim helper on your turn
+  if (t.turn === "you" && !t.projectile && t.youHP > 0 && t.botHP > 0) {
+    const rad = (t.aimAngle * Math.PI) / 180;
+    const tx = 95 + Math.cos(rad) * (t.aimPower * 3.2);
+    const ty = 240 - Math.sin(rad) * (t.aimPower * 3.2);
+    ctx.strokeStyle = "#ffd670";
+    ctx.beginPath();
+    ctx.moveTo(95, 240);
+    ctx.lineTo(tx, ty);
+    ctx.stroke();
+  }
+
+  // projectile physics
+  if (t.projectile) {
+    t.projectile.vy += 0.22; // gravity
+    t.projectile.vx += t.wind; // wind
+    t.projectile.x += t.projectile.vx;
+    t.projectile.y += t.projectile.vy;
+
+    ctx.save();
+    ctx.translate(t.projectile.x, t.projectile.y);
+    ctx.rotate(Math.atan2(t.projectile.vy, t.projectile.vx));
+    ctx.fillStyle = "#f7f0ff";
+    ctx.fillRect(-10, -2, 20, 4);
+    ctx.restore();
+
+    const hitYou = Math.abs(t.projectile.x - 83) < 18 && Math.abs(t.projectile.y - 238) < 20;
+    const hitBot = Math.abs(t.projectile.x - 678) < 18 && Math.abs(t.projectile.y - 238) < 20;
+
+    if (hitYou && t.projectile.owner === "bot") {
+      t.youHP = Math.max(0, t.youHP - 1);
+      addBubble("Bot hit you with a trident.");
+      t.projectile = null;
+      t.wind = (Math.random() - 0.5) * 0.12;
+    } else if (hitBot && t.projectile.owner === "you") {
+      t.botHP = Math.max(0, t.botHP - 1);
+      addBubble("Direct hit! You tagged the bot.", "you");
+      t.projectile = null;
+      t.wind = (Math.random() - 0.5) * 0.12;
+    } else if (t.projectile.y > 340 || t.projectile.x < -40 || t.projectile.x > 800) {
+      t.projectile = null;
+      t.wind = (Math.random() - 0.5) * 0.12;
+    }
+  }
+
+  if (t.cooldown > 0) t.cooldown -= 1;
+  if (!t.projectile && t.turn === "bot" && t.youHP > 0 && t.botHP > 0) botThrow();
+
+  el.stats.innerHTML = "";
+  el.stats.append(stat("Your HP", t.youHP));
+  el.stats.append(stat("Bot HP", t.botHP));
+  el.stats.append(stat("Turn", t.turn));
+  el.stats.append(stat("Angle", `${t.aimAngle}°`));
+  el.stats.append(stat("Power", t.aimPower));
+  el.stats.append(stat("Wind", t.wind.toFixed(2)));
+  el.stats.append(stat("Trust", state.trust));
+
+  if (t.youHP <= 0) el.status.textContent = "Bot wins the duel.";
+  else if (t.botHP <= 0) el.status.textContent = "You win the trident duel!";
+  else el.status.textContent = "Take turns throwing. Adjust angle/power for arc + wind.";
 }
 
 function frame() {
   if (state.running) {
-    if (state.mode === "normal") renderNormal();
-    if (state.mode === "iceberg") renderIceberg();
     if (state.mode === "ocean") renderOcean();
     if (state.mode === "emotion") renderEmotion();
     if (state.mode === "dig") renderDig();
     if (state.mode === "mirror") renderMirror();
+    if (state.mode === "trident") renderTrident();
   }
   requestAnimationFrame(frame);
 }
