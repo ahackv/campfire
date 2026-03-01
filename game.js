@@ -11,6 +11,7 @@ const el = {
   menu: document.getElementById("menu"),
   gameView: document.getElementById("gameView"),
   backBtn: document.getElementById("backBtn"),
+  musicBtn: document.getElementById("musicBtn"),
   modeTitle: document.getElementById("modeTitle"),
   summary: document.getElementById("summary"),
   stats: document.getElementById("stats"),
@@ -27,6 +28,70 @@ const el = {
 const ctx = el.canvas.getContext("2d");
 const faceCtx = el.botFace.getContext("2d");
 const keys = new Set();
+
+let audioCtx = null;
+let musicOn = false;
+let musicTimer = null;
+let bassTimer = null;
+const progression = [220, 174.61, 196, 164.81, 246.94, 196, 220, 174.61];
+let progIndex = 0;
+
+function ensureAudioCtx() {
+  if (!audioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    audioCtx = new Ctx();
+  }
+  return audioCtx;
+}
+
+function playTone(freq, duration = 0.18, type = "triangle", volume = 0.03) {
+  const ctxA = ensureAudioCtx();
+  if (!ctxA) return;
+  const osc = ctxA.createOscillator();
+  const gain = ctxA.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.value = volume;
+  osc.connect(gain);
+  gain.connect(ctxA.destination);
+  osc.start();
+  osc.stop(ctxA.currentTime + duration);
+}
+
+function startMusic() {
+  if (musicOn) return;
+  musicOn = true;
+  el.musicBtn.textContent = "🎵 Music: On";
+
+  musicTimer = setInterval(() => {
+    const root = progression[progIndex % progression.length];
+    playTone(root, 0.18, "triangle", 0.028);
+    playTone(root * 1.5, 0.14, "sine", 0.018);
+    if (Math.random() < 0.45) playTone(root * 2, 0.08, "square", 0.012);
+    progIndex += 1;
+  }, 240);
+
+  bassTimer = setInterval(() => {
+    const root = progression[(progIndex + 7) % progression.length] / 2;
+    playTone(root, 0.22, "sawtooth", 0.018);
+  }, 480);
+}
+
+function stopMusic() {
+  musicOn = false;
+  el.musicBtn.textContent = "🎵 Music: Off";
+  if (musicTimer) clearInterval(musicTimer);
+  if (bassTimer) clearInterval(bassTimer);
+  musicTimer = null;
+  bassTimer = null;
+}
+
+function toggleMusic() {
+  if (musicOn) stopMusic();
+  else startMusic();
+}
+
 
 const state = {
   mode: null,
@@ -258,6 +323,7 @@ function spawnBlood(x, y, amount = 18) {
 }
 
 el.backBtn.addEventListener("click", showMenu);
+el.musicBtn.addEventListener("click", toggleMusic);
 window.addEventListener("keydown", (e) => keys.add(e.key.toLowerCase()));
 window.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
 
