@@ -303,6 +303,46 @@ el.composer.addEventListener("submit", (e) => {
   setTimeout(() => addBubble(botReply(msg)), 120);
 });
 
+
+
+function drawSeaLifeDecor(timeSeed = 0) {
+  // fish
+  for (let i = 0; i < 7; i++) {
+    const x = (timeSeed * (0.6 + i * 0.07) + i * 120) % 820 - 40;
+    const y = 55 + (i % 5) * 52 + Math.sin(timeSeed * 0.01 + i) * 8;
+    ctx.fillStyle = i % 2 ? "rgba(126, 232, 255, 0.22)" : "rgba(255, 177, 129, 0.2)";
+    ctx.beginPath();
+    ctx.ellipse(x, y, 13, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x - 12, y);
+    ctx.lineTo(x - 20, y - 5);
+    ctx.lineTo(x - 20, y + 5);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // starfish
+  for (let i = 0; i < 5; i++) {
+    const sx = 90 + i * 145 + Math.sin(timeSeed * 0.006 + i) * 6;
+    const sy = 300 + Math.cos(timeSeed * 0.005 + i) * 4;
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate(timeSeed * 0.0008 + i);
+    ctx.fillStyle = "rgba(255, 170, 120, 0.28)";
+    for (let a = 0; a < 5; a++) {
+      ctx.rotate((Math.PI * 2) / 5);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(0, -11);
+      ctx.lineTo(4, -4);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
 function renderOcean() {
   const o = state.ocean;
   let speed = 3;
@@ -323,6 +363,7 @@ function renderOcean() {
   grad.addColorStop(1, `rgb(5,${g - 10},${b - 25})`);
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, 760, 340);
+  drawSeaLifeDecor(o.depth + o.botDepth);
 
   if (o.hitCooldown > 0) o.hitCooldown -= 1;
 
@@ -370,6 +411,7 @@ function renderEmotion() {
   grad.addColorStop(1, "#130f21");
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, 760, 340);
+  drawSeaLifeDecor(e.hidden * 3 + e.botHidden * 2);
   ctx.fillStyle = "#f4d4be";
   ctx.fillRect(170, 90, 120, 120);
   ctx.fillRect(470, 90, 120, 120);
@@ -397,6 +439,7 @@ function renderDig() {
   grad.addColorStop(1, "#24160e");
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, 760, 340);
+  drawSeaLifeDecor(d.layer * 120 + d.relics * 20);
 
   for (let i = 0; i < d.finds.length; i++) {
     ctx.fillStyle = i <= d.layer ? "#8b643e" : "#543b27";
@@ -430,6 +473,7 @@ function renderMirror() {
   ctx.fillRect(0, 0, 760, 170);
   ctx.fillStyle = "#2f1f34";
   ctx.fillRect(0, 170, 760, 170);
+  drawSeaLifeDecor(m.mirrorNoise * 100);
 
   ctx.fillStyle = "#8ae6ff";
   ctx.fillRect(m.x, 90, 12, 12);
@@ -459,6 +503,7 @@ function renderTrident() {
   grad.addColorStop(1, "#1c0f1d");
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, 760, 340);
+  drawSeaLifeDecor((3 - t.youHP + 3 - t.botHP) * 180 + (t.cooldown || 0));
 
   ctx.fillStyle = "#4d2b2f";
   ctx.fillRect(0, 260, 760, 80);
