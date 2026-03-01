@@ -49,13 +49,12 @@ const MEME_TRIGGERS = [
   { key: "1000000000 iq", label: "1,000,000,000 IQ", tones: [261.63, 329.63, 392, 523.25, 783.99] },
 ];
 
-const MEME_RADIO_PLAYLIST = [
-  { label: "Jet 2 Holiday", tones: [523.25, 659.25, 783.99] },
-  { label: "Wait Wait Wait", tones: [349.23, 349.23, 293.66, 261.63] },
-  { label: "Wide Putin", tones: [246.94, 293.66, 369.99] },
-  { label: "Pongbib Fail", tones: [392, 329.63, 261.63] },
-  { label: "PLH", tones: [440, 554.37, 440, 659.25] },
-  { label: "1,000,000,000 IQ", tones: [261.63, 329.63, 392, 523.25, 783.99] },
+const SEA_MUSIC_PLAYLIST = [
+  { label: "Coral Drift", tones: [261.63, 293.66, 349.23, 392.0, 440.0] },
+  { label: "Moon Tide", tones: [220.0, 246.94, 293.66, 329.63, 392.0] },
+  { label: "Reef Glow", tones: [196.0, 246.94, 311.13, 392.0, 493.88] },
+  { label: "Bubble Rush", tones: [293.66, 349.23, 392.0, 440.0, 523.25] },
+  { label: "Deep Current", tones: [174.61, 220.0, 261.63, 329.63, 392.0] },
 ];
 
 const FUNNY_NUMBERS = {
@@ -146,48 +145,72 @@ function buildTrack(tones) {
   const lead = [];
   const bass = [];
   const pad = [];
+  const pulse = [];
   for (let step = 0; step < 64; step++) {
     lead.push(step % 2 === 0 ? safeTones[(step / 2) % safeTones.length] : 0);
     bass.push(step % 4 === 0 ? safeTones[(Math.floor(step / 4)) % safeTones.length] / 2 : 0);
     pad.push(step % 8 === 0 ? safeTones[(Math.floor(step / 8)) % safeTones.length] : 0);
+    pulse.push(step % 2 === 1 ? safeTones[(Math.floor(step / 2)) % safeTones.length] * 0.5 : 0);
   }
   return {
-    stepDuration: 0.19,
+    baseStepDuration: 0.28,
+    minStepDuration: 0.12,
     steps: 64,
     lead,
     bass,
     pad,
+    pulse,
   };
 }
 
+function getMusicEnergy() {
+  if (!state || !state.mode) return 0;
+  if (state.mode === "ocean") return Math.min(1, Math.max(state.ocean.depth, state.ocean.botDepth) / 500);
+  if (state.mode === "emotion") return Math.min(1, Math.max(state.emotion.hidden, state.emotion.botHidden) / 100);
+  if (state.mode === "dig") return Math.min(1, Math.max(state.dig.layer, state.dig.botLayer) / (state.dig.finds.length - 1));
+  if (state.mode === "mirror") return Math.min(1, Math.max(state.mirror.x, state.mirror.botX) / state.mirror.goal);
+  if (state.mode === "trident") return Math.min(1, (6 - (state.trident.youHP + state.trident.botHP)) / 6);
+  if (state.mode === "text") return Math.min(1, state.text.round / 5);
+  return 0;
+}
+
+function getAdaptiveStepDuration() {
+  const energy = getMusicEnergy();
+  const span = currentTrack.baseStepDuration - currentTrack.minStepDuration;
+  return Math.max(currentTrack.minStepDuration, currentTrack.baseStepDuration - span * energy);
+}
+
 function setCurrentTrack(index) {
-  const meme = MEME_RADIO_PLAYLIST[index % MEME_RADIO_PLAYLIST.length];
-  currentTrack = buildTrack(meme.tones);
+  const track = SEA_MUSIC_PLAYLIST[index % SEA_MUSIC_PLAYLIST.length];
+  currentTrack = buildTrack(track.tones);
   currentStep = 0;
   nextStepTime = ensureAudioCtx().currentTime + 0.05;
-  el.botMood.textContent = `Now playing full track: ${meme.label}`;
+  el.botMood.textContent = `Now playing: ${track.label} | tempo ${Math.round((1 - getAdaptiveStepDuration() / currentTrack.baseStepDuration) * 100)}%`;
 }
 
 function scheduleStep() {
   if (!currentTrack) return;
   const step = currentStep % currentTrack.steps;
   const t = nextStepTime;
+  const stepDuration = getAdaptiveStepDuration();
   const leadNote = currentTrack.lead[step];
   const bassNote = currentTrack.bass[step];
   const padNote = currentTrack.pad[step];
+  const pulseNote = currentTrack.pulse[step];
 
-  if (leadNote) playToneAt(leadNote, t, currentTrack.stepDuration * 0.95, "square", 0.02);
-  if (bassNote) playToneAt(bassNote, t, currentTrack.stepDuration * 0.9, "triangle", 0.03);
+  if (leadNote) playToneAt(leadNote, t, stepDuration * 0.9, "triangle", 0.018);
+  if (bassNote) playToneAt(bassNote, t, stepDuration * 0.86, "sine", 0.03);
   if (padNote) {
-    playToneAt(padNote, t, currentTrack.stepDuration * 2.6, "sine", 0.012);
-    playToneAt(padNote * 1.25, t, currentTrack.stepDuration * 2.2, "sine", 0.008);
+    playToneAt(padNote, t, stepDuration * 2.6, "sine", 0.01);
+    playToneAt(padNote * 1.5, t, stepDuration * 2.2, "sine", 0.006);
   }
+  if (pulseNote && getMusicEnergy() > 0.35) playToneAt(pulseNote, t, stepDuration * 0.38, "square", 0.01);
 
   currentStep += 1;
-  nextStepTime += currentTrack.stepDuration;
+  nextStepTime += stepDuration;
 
   if (currentStep >= currentTrack.steps) {
-    memeLoopIndex = (memeLoopIndex + 1) % MEME_RADIO_PLAYLIST.length;
+    memeLoopIndex = (memeLoopIndex + 1) % SEA_MUSIC_PLAYLIST.length;
     setCurrentTrack(memeLoopIndex);
   }
 }
@@ -205,7 +228,7 @@ function startMusic() {
   if (ctxA.state === "suspended") ctxA.resume();
 
   musicOn = true;
-  el.musicBtn.textContent = "🎵 Meme Radio: On";
+  el.musicBtn.textContent = "🎵 Sea Music: On";
 
   setCurrentTrack(memeLoopIndex);
   memeSequencerTimer = setInterval(runSequencer, 50);
@@ -213,7 +236,7 @@ function startMusic() {
 
 function stopMusic() {
   musicOn = false;
-  el.musicBtn.textContent = "🎵 Meme Radio: Off";
+  el.musicBtn.textContent = "🎵 Sea Music: Off";
   if (memeSequencerTimer) clearInterval(memeSequencerTimer);
   memeSequencerTimer = null;
 }
