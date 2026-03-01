@@ -339,6 +339,10 @@ const state = {
     maxCombo: 0,
     boosts: 2,
     over: false,
+    jumpBuffer: 0,
+    coyote: 0,
+    grounded: false,
+    springHits: 0,
     platforms: [],
     pearlsMap: [],
   },
@@ -552,6 +556,10 @@ function setupMode(id) {
       maxCombo: 0,
       boosts: 2,
       over: false,
+      jumpBuffer: 0,
+      coyote: 0,
+      grounded: false,
+      springHits: 0,
       platforms,
       pearlsMap: createOnlyUpPearls(platforms),
     };
@@ -977,16 +985,26 @@ function renderOnlyUp() {
 
   const left = keys.has("arrowleft") || keys.has("a");
   const right = keys.has("arrowright") || keys.has("d");
-  const jump = keys.has("arrowup") || keys.has("w") || keys.has(" ");
+  const jumpHeld = keys.has("arrowup") || keys.has("w") || keys.has(" ");
 
   if (!u.over) {
-    if (left) u.vx -= 0.35;
-    if (right) u.vx += 0.35;
-    u.vx *= 0.9;
-    u.vx = Math.max(-4.4, Math.min(4.4, u.vx));
-    if (jump && u.vy > -0.7 && u.vy < 0.9) u.vy = -8.9;
+    if (jumpHeld) u.jumpBuffer = 7;
+    else u.jumpBuffer = Math.max(0, u.jumpBuffer - 1);
 
-    u.vy += 0.35;
+    if (left) u.vx -= 0.42;
+    if (right) u.vx += 0.42;
+    u.vx *= 0.9;
+    u.vx = Math.max(-5.2, Math.min(5.2, u.vx));
+
+    const canJump = u.coyote > 0 || u.grounded;
+    if (u.jumpBuffer > 0 && canJump) {
+      u.vy = -9.8;
+      u.jumpBuffer = 0;
+      u.coyote = 0;
+      u.grounded = false;
+    }
+
+    u.vy += 0.36;
     const prevY = u.y;
     u.x += u.vx;
     u.y += u.vy;
@@ -994,23 +1012,36 @@ function renderOnlyUp() {
     if (u.x < 10) { u.x = 10; u.vx = 0; }
     if (u.x > 750) { u.x = 750; u.vx = 0; }
 
-    u.platforms.forEach((p) => {
+    let landedThisFrame = false;
+    u.platforms.forEach((p, idx) => {
       if (p.moving) {
         p.x += p.vx;
         if (p.x < 0 || p.x + p.w > 760) p.vx *= -1;
       }
       const py = p.y + Math.sin(Date.now() * 0.002 + p.bob) * 2;
-      const landed = prevY + 12 <= py && u.y + 12 >= py && u.x > p.x - 8 && u.x < p.x + p.w + 8 && u.vy >= 0;
+      const landed = prevY + 12 <= py && u.y + 12 >= py && u.x > p.x - 10 && u.x < p.x + p.w + 10 && u.vy >= 0;
       if (landed) {
+        const spring = idx % 6 === 0;
         u.y = py - 12;
-        u.vy = -8.4;
-        u.combo += 1;
+        u.vy = spring ? -12.2 : -9.1;
+        landedThisFrame = true;
+        u.combo += spring ? 2 : 1;
+        if (spring) u.springHits += 1;
         u.maxCombo = Math.max(u.maxCombo, u.combo);
       }
     });
 
+    if (landedThisFrame) {
+      u.grounded = true;
+      u.coyote = 8;
+    } else {
+      u.grounded = false;
+      u.coyote = Math.max(0, u.coyote - 1);
+      if (u.vy > 0.6) u.combo = Math.max(0, u.combo - 0.05);
+    }
+
     u.pearlsMap.forEach((pearl) => {
-      if (!pearl.taken && Math.hypot(pearl.x - u.x, pearl.y - u.y) < 13) {
+      if (!pearl.taken && Math.hypot(pearl.x - u.x, pearl.y - u.y) < 14) {
         pearl.taken = true;
         u.pearls += 1;
         u.combo += 1;
@@ -1020,9 +1051,10 @@ function renderOnlyUp() {
 
     const heightNow = Math.max(0, 300 - u.y);
     u.bestHeight = Math.max(u.bestHeight, heightNow);
-    if (u.bestHeight > 0) u.cameraY = Math.max(u.cameraY, u.bestHeight - 120);
+    const camTarget = Math.max(0, u.bestHeight - 120);
+    u.cameraY += (camTarget - u.cameraY) * 0.15;
 
-    if (u.y - u.cameraY > 390) {
+    if (u.y > u.cameraY + 390) {
       u.over = true;
       markEventOnce("up-fail", "fail");
     }
@@ -1034,13 +1066,14 @@ function renderOnlyUp() {
   }
 
   ctx.save();
-  ctx.translate(0, u.cameraY);
+  ctx.translate(0, -u.cameraY);
 
   u.platforms.forEach((p, idx) => {
     const py = p.y + Math.sin(Date.now() * 0.002 + p.bob) * 2;
-    ctx.fillStyle = idx % 2 ? "#77ffd2" : "#ffc8e9";
+    const spring = idx % 6 === 0;
+    ctx.fillStyle = spring ? "#ffe17a" : (idx % 2 ? "#77ffd2" : "#ffc8e9");
     ctx.fillRect(p.x, py, p.w, p.h);
-    ctx.fillStyle = "rgba(10, 54, 79, 0.5)";
+    ctx.fillStyle = spring ? "#ff9f1c" : "rgba(10, 54, 79, 0.5)";
     ctx.fillRect(p.x, py + p.h - 3, p.w, 3);
   });
 
@@ -1070,14 +1103,14 @@ function renderOnlyUp() {
   el.stats.innerHTML = "";
   el.stats.append(stat("Height", Math.floor(u.bestHeight)));
   el.stats.append(stat("Pearls", u.pearls));
-  el.stats.append(stat("Combo", u.combo));
-  el.stats.append(stat("Best Combo", u.maxCombo));
+  el.stats.append(stat("Combo", Math.floor(u.combo)));
+  el.stats.append(stat("Best Combo", Math.floor(u.maxCombo)));
   el.stats.append(stat("Bubble Boost", u.boosts));
-  el.stats.append(stat("Trust", state.trust));
+  el.stats.append(stat("Spring Hits", u.springHits));
 
-  if (!u.over) el.status.textContent = "Climb up! Chain landings + pearls for huge combos.";
+  if (!u.over) el.status.textContent = "Climb up fast! Yellow spring platforms launch you higher.";
   else if (u.bestHeight >= 1700) el.status.textContent = "You reached the sky reef! Massive win.";
-  else el.status.textContent = "Splash down! Try a cleaner climb and use boosts wisely.";
+  else el.status.textContent = "Splash down! Try chaining springs and boosts for a crazy run.";
 }
 
 function renderOcean() {
