@@ -43,6 +43,22 @@ let transitionTimer = null;
 let bgMusicPlayers = [];
 let bgMusicIndex = 0;
 let usingFileMusic = false;
+const TRIDENT = {
+  anchorX: 110,
+  anchorY: 238,
+  dragStartRadius: 120,
+  powerScale: 0.45,
+  maxPower: 60,
+  minPower: 3,
+  launchSpeedScale: 0.35,
+  gravity: 0.14,
+  playerHitX: 83,
+  playerHitY: 238,
+  botHitX: 678,
+  botHitY: 238,
+  hitRadiusX: 22,
+  hitRadiusY: 26,
+};
 
 const MEME_TRIGGERS = [
   { key: "jet 2 holiday", label: "Jet 2 Holiday", tones: [523.25, 659.25, 783.99] },
@@ -417,8 +433,8 @@ const state = {
     botHP: 3,
     turn: "you",
     dragging: false,
-    dragX: 95,
-    dragY: 240,
+    dragX: TRIDENT.anchorX,
+    dragY: TRIDENT.anchorY,
     projectile: null,
     wind: 0,
     cooldown: 0,
@@ -597,8 +613,20 @@ function setupMode(id) {
     addBubble("Watch both worlds. Phase Shift lets you ghost through traps briefly.");
   }
   if (id === "trident") {
-    state.trident = { youHP: 3, botHP: 3, turn: "you", dragging: false, dragX: 95, dragY: 240, projectile: null, wind: (Math.random() - 0.5) * 0.12, cooldown: 0, blood: [], deathAnim: null };
-    el.controls.innerHTML = '<span class="stat">Your turn: click near your diver, pull back, release to throw.</span>';
+    state.trident = {
+      youHP: 3,
+      botHP: 3,
+      turn: "you",
+      dragging: false,
+      dragX: TRIDENT.anchorX,
+      dragY: TRIDENT.anchorY,
+      projectile: null,
+      wind: (Math.random() - 0.5) * 0.12,
+      cooldown: 0,
+      blood: [],
+      deathAnim: null,
+    };
+    el.controls.innerHTML = '<span class="stat">Your turn: click near your diver, pull back farther for more power, release to throw.</span>';
     addBubble("Turn duel started. Drag with your mouse to aim and set power.");
   }
   if (id === "text") {
@@ -747,18 +775,22 @@ function tryThrowTrident(releaseX, releaseY) {
   const t = state.trident;
   if (state.mode !== "trident" || t.projectile || t.turn !== "you" || t.youHP <= 0 || t.botHP <= 0) return;
 
-  const anchorX = 95;
-  const anchorY = 240;
+  const anchorX = TRIDENT.anchorX;
+  const anchorY = TRIDENT.anchorY;
   const pullX = anchorX - releaseX;
   const pullY = anchorY - releaseY;
-  const power = Math.min(30, Math.hypot(pullX, pullY) * 0.22);
-  if (power < 2.5) return;
+  const pullDistance = Math.hypot(pullX, pullY);
+  const power = Math.min(TRIDENT.maxPower, pullDistance * TRIDENT.powerScale);
+  if (power < TRIDENT.minPower || pullDistance < 0.001) return;
+  const speed = power * TRIDENT.launchSpeedScale;
+  const dirX = pullX / pullDistance;
+  const dirY = pullY / pullDistance;
 
   t.projectile = {
     x: anchorX,
     y: anchorY,
-    vx: pullX * 0.08,
-    vy: pullY * 0.08,
+    vx: dirX * speed,
+    vy: dirY * speed,
     owner: "you",
     trail: [],
   };
@@ -800,7 +832,7 @@ el.canvas.addEventListener("mousedown", (e) => {
   const rect = el.canvas.getBoundingClientRect();
   const x = ((e.clientX - rect.left) / rect.width) * el.canvas.width;
   const y = ((e.clientY - rect.top) / rect.height) * el.canvas.height;
-  if (Math.hypot(x - 95, y - 240) < 90) {
+  if (Math.hypot(x - TRIDENT.anchorX, y - TRIDENT.anchorY) < TRIDENT.dragStartRadius) {
     t.dragging = true;
     t.dragX = x;
     t.dragY = y;
@@ -1241,10 +1273,10 @@ function renderTrident() {
 
   // mouse pull-back aim helper
   if (t.turn === "you" && !t.projectile && t.youHP > 0 && t.botHP > 0) {
-    const anchorX = 95;
-    const anchorY = 240;
-    const tx = t.dragging ? t.dragX : anchorX - 32;
-    const ty = t.dragging ? t.dragY : anchorY - 20;
+    const anchorX = TRIDENT.anchorX;
+    const anchorY = TRIDENT.anchorY;
+    const tx = t.dragging ? t.dragX : anchorX - 56;
+    const ty = t.dragging ? t.dragY : anchorY + 30;
     ctx.strokeStyle = "#ffd670";
     ctx.beginPath();
     ctx.moveTo(anchorX, anchorY);
@@ -1272,7 +1304,7 @@ function renderTrident() {
 
   // projectile physics + trail
   if (t.projectile) {
-    t.projectile.vy += 0.22;
+    t.projectile.vy += TRIDENT.gravity;
     t.projectile.vx += t.wind;
     t.projectile.x += t.projectile.vx;
     t.projectile.y += t.projectile.vy;
@@ -1294,12 +1326,14 @@ function renderTrident() {
     ctx.fillRect(-10, -2, 20, 4);
     ctx.restore();
 
-    const hitYou = Math.abs(t.projectile.x - 83) < 18 && Math.abs(t.projectile.y - 238) < 20;
-    const hitBot = Math.abs(t.projectile.x - 678) < 18 && Math.abs(t.projectile.y - 238) < 20;
+    const hitYou = Math.abs(t.projectile.x - TRIDENT.playerHitX) < TRIDENT.hitRadiusX
+      && Math.abs(t.projectile.y - TRIDENT.playerHitY) < TRIDENT.hitRadiusY;
+    const hitBot = Math.abs(t.projectile.x - TRIDENT.botHitX) < TRIDENT.hitRadiusX
+      && Math.abs(t.projectile.y - TRIDENT.botHitY) < TRIDENT.hitRadiusY;
 
     if (hitYou && t.projectile.owner === "bot") {
       t.youHP = Math.max(0, t.youHP - 1);
-      spawnBlood(83, 238, 22);
+      spawnBlood(TRIDENT.playerHitX, TRIDENT.playerHitY, 22);
       if (t.youHP <= 0) {
         t.deathAnim = { side: "you", timer: 90 };
         addBubble("Fatal hit. You fall in the arena.");
@@ -1310,7 +1344,7 @@ function renderTrident() {
       t.wind = (Math.random() - 0.5) * 0.12;
     } else if (hitBot && t.projectile.owner === "you") {
       t.botHP = Math.max(0, t.botHP - 1);
-      spawnBlood(678, 238, 22);
+      spawnBlood(TRIDENT.botHitX, TRIDENT.botHitY, 22);
       if (t.botHP <= 0) {
         t.deathAnim = { side: "bot", timer: 90 };
         addBubble("Direct kill shot. Bot is down.", "you");
@@ -1332,7 +1366,7 @@ function renderTrident() {
   el.stats.append(stat("Your HP", t.youHP));
   el.stats.append(stat("Bot HP", t.botHP));
   el.stats.append(stat("Turn", t.turn));
-  const previewPower = Math.min(30, Math.hypot(95 - t.dragX, 240 - t.dragY) * 0.22);
+  const previewPower = Math.min(TRIDENT.maxPower, Math.hypot(TRIDENT.anchorX - t.dragX, TRIDENT.anchorY - t.dragY) * TRIDENT.powerScale);
   el.stats.append(stat("Aim power", t.dragging ? previewPower.toFixed(1) : "ready"));
   el.stats.append(stat("Wind", t.wind.toFixed(2)));
   el.stats.append(stat("Trust", state.trust));
@@ -1340,7 +1374,7 @@ function renderTrident() {
 
   if (t.youHP <= 0) el.status.textContent = "Bot wins the duel.";
   else if (t.botHP <= 0) el.status.textContent = "You win the trident duel!";
-  else el.status.textContent = "Take turns throwing. Account for gravity + wind.";
+  else el.status.textContent = "Take turns throwing. Pull back farther for longer shots, and account for gravity + wind.";
 
   if (t.youHP <= 0) markEventOnce("trident-fail", "fail");
   else if (t.botHP <= 0) markEventOnce("trident-win", "victory");
