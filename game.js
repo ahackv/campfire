@@ -680,12 +680,33 @@ function spawnOceanEntities() {
 
 function createOnlyUpPlatforms() {
   const platforms = [];
-  let y = 300;
-  for (let i = 0; i < 70; i++) {
-    const width = 70 + Math.random() * 90;
-    const x = 20 + Math.random() * (740 - width);
-    platforms.push({ x, y, w: width, h: 12, bob: Math.random() * Math.PI * 2, moving: i % 5 === 0, vx: (Math.random() > 0.5 ? 1 : -1) * (0.3 + Math.random() * 0.6) });
-    y -= 42 + Math.random() * 28;
+
+  // guaranteed spawn platform so players always start on something solid
+  platforms.push({
+    x: 300,
+    y: 282,
+    w: 170,
+    h: 14,
+    bob: 0,
+    moving: false,
+    vx: 0,
+  });
+
+  let y = 250;
+  for (let i = 0; i < 80; i++) {
+    const width = 72 + Math.random() * 88;
+    const x = 18 + Math.random() * (742 - width);
+    const moving = i % 3 === 0; // more moving platforms for fun
+    platforms.push({
+      x,
+      y,
+      w: width,
+      h: 12,
+      bob: Math.random() * Math.PI * 2,
+      moving,
+      vx: moving ? (Math.random() > 0.5 ? 1 : -1) * (0.55 + Math.random() * 0.95) : 0,
+    });
+    y -= 36 + Math.random() * 24;
   }
   return platforms;
 }
@@ -768,7 +789,7 @@ function setupMode(id) {
     const platforms = createOnlyUpPlatforms();
     state.up = {
       x: 380,
-      y: 260,
+      y: 270,
       vx: 0,
       vy: 0,
       cameraY: 0,
@@ -1252,6 +1273,7 @@ function renderOnlyUp() {
         const spring = idx % 6 === 0;
         u.y = py - 12;
         u.vy = spring ? -12.2 : -9.1;
+        if (p.moving) u.x += p.vx * 0.9;
         landedThisFrame = true;
         u.combo += spring ? 2 : 1;
         if (spring) u.springHits += 1;
@@ -1336,7 +1358,7 @@ function renderOnlyUp() {
   el.stats.append(stat("Bubble Boost", u.boosts));
   el.stats.append(stat("Spring Hits", u.springHits));
 
-  if (!u.over) el.status.textContent = "Climb up fast! Yellow spring platforms launch you higher.";
+  if (!u.over) el.status.textContent = "Climb up fast! Moving platforms shift your route and yellow springs launch you higher.";
   else if (u.bestHeight >= 1700) el.status.textContent = "You reached the sky reef! Massive win.";
   else el.status.textContent = "Splash down! Try chaining springs and boosts for a crazy run.";
 }
