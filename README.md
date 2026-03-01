@@ -25,12 +25,16 @@ A browser arcade game with six modes, animated bot teammate chat, and dynamic au
 - Background music: `assets/music/`
   - `mii-channel-music.mp3`
   - `the-entertainer-fuk.mp3`
+- Menu/home playlist: `assets/music/menu/`
+  - `through-sea-cc0.ogg`
+  - `ocean-trance-cc0.ogg`
 - Sound effects: `assets/sfx/`
   - `nothing-beats-a-jet2-holiday.mp3` (victory)
   - `wait-wait-wait-what-the-hell.mp3` (chaos)
   - `spongebob-fail.mp3` (fail)
 
 The game prefers file-based background music and falls back to synth sequencing if media playback is unavailable.
+Menu music rotates on the home screen and pauses when you enter a game mode.
 
 ## Run Locally
 

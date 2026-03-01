@@ -5,6 +5,8 @@ Place files in these folders:
 - `assets/music/`
   - `mii-channel-music.mp3` — background music track.
   - `the-entertainer-fuk.mp3` — background music track.
+  - `menu/through-sea-cc0.ogg` — menu/home playlist track.
+  - `menu/ocean-trance-cc0.ogg` — menu/home playlist track.
 - `assets/sfx/`
   - `nothing-beats-a-jet2-holiday.mp3` — victory / theme trigger.
   - `wait-wait-wait-what-the-hell.mp3` — chaos / surprise trigger.
@@ -23,3 +25,4 @@ Legacy fallback names are still supported in code for compatibility:
 - Chaos moments (meme phrase + funny numbers) play chaos sound.
 - Fail moments (HP zero / losing conditions) play fail sound.
 - Sea Music uses tracks from `assets/music/` and falls back to synth sequencing if file playback is unavailable.
+- Menu/home screen plays rotating tracks from `assets/music/menu/` after audio is unlocked by user interaction.

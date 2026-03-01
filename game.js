@@ -43,6 +43,9 @@ let transitionTimer = null;
 let bgMusicPlayers = [];
 let bgMusicIndex = 0;
 let usingFileMusic = false;
+let menuMusicPlayers = [];
+let menuMusicIndex = 0;
+let menuMusicActive = false;
 const TRIDENT = {
   anchorX: 110,
   anchorY: 238,
@@ -81,6 +84,10 @@ const SEA_MUSIC_PLAYLIST = [
 const BG_MUSIC_TRACKS = [
   { label: "Mii Channel", sources: ["./assets/music/mii-channel-music.mp3"] },
   { label: "The Entertainer", sources: ["./assets/music/the-entertainer-fuk.mp3"] },
+];
+const MENU_MUSIC_TRACKS = [
+  { label: "Through Sea", sources: ["./assets/music/menu/through-sea-cc0.ogg"] },
+  { label: "Ocean Trance", sources: ["./assets/music/menu/ocean-trance-cc0.ogg"] },
 ];
 
 const FUNNY_NUMBERS = {
@@ -349,17 +356,98 @@ function ensureBgMusicPlayers() {
   return bgMusicPlayers;
 }
 
+function stopMenuMusic(reset = false) {
+  menuMusicActive = false;
+  menuMusicPlayers.forEach((player) => {
+    player.pause();
+    if (!reset) return;
+    try {
+      player.currentTime = 0;
+    } catch (_err) {
+      // ignore seek errors
+    }
+  });
+}
+
+function playMenuMusicTrack(index, restart = false) {
+  if (!menuMusicPlayers.length) return false;
+
+  const normalized = ((index % menuMusicPlayers.length) + menuMusicPlayers.length) % menuMusicPlayers.length;
+  menuMusicIndex = normalized;
+
+  menuMusicPlayers.forEach((player, i) => {
+    if (i === normalized) return;
+    player.pause();
+    try {
+      player.currentTime = 0;
+    } catch (_err) {
+      // ignore seek errors
+    }
+  });
+
+  const player = menuMusicPlayers[normalized];
+  const track = MENU_MUSIC_TRACKS[normalized] || { label: `Menu Track ${normalized + 1}` };
+  if (restart) {
+    try {
+      player.currentTime = 0;
+    } catch (_err) {
+      // ignore seek errors
+    }
+  }
+
+  try {
+    const p = player.play();
+    if (p && typeof p.then === "function") {
+      p.then(() => {
+        menuMusicActive = true;
+        if (!state.running && !state.mode) el.status.textContent = `Menu music: ${track.label}`;
+      }).catch(() => {
+        menuMusicActive = false;
+      });
+      return true;
+    }
+    menuMusicActive = true;
+    if (!state.running && !state.mode) el.status.textContent = `Menu music: ${track.label}`;
+    return true;
+  } catch (_err) {
+    menuMusicActive = false;
+    return false;
+  }
+}
+
+function ensureMenuMusicPlayers() {
+  if (menuMusicPlayers.length) return menuMusicPlayers;
+  menuMusicPlayers = MENU_MUSIC_TRACKS.map((track, index) => {
+    const player = createAudioFromCandidates(track.sources, 0.38);
+    if (!player) return null;
+    player.loop = false;
+    player.addEventListener("ended", () => {
+      if (!menuMusicActive || state.running || state.mode) return;
+      const next = (index + 1) % MENU_MUSIC_TRACKS.length;
+      playMenuMusicTrack(next, true);
+    });
+    return player;
+  }).filter(Boolean);
+  return menuMusicPlayers;
+}
+
+function startMenuMusic() {
+  if (state.running || state.mode) return;
+  ensureMenuMusicPlayers();
+  playMenuMusicTrack(menuMusicIndex);
+}
+
 function startMusic() {
   if (musicOn) return;
+  stopMenuMusic(false);
   const ctxA = ensureAudioCtx();
-  if (!ctxA) return;
-  if (ctxA.state === "suspended") ctxA.resume();
+  if (ctxA && ctxA.state === "suspended") ctxA.resume();
 
   musicOn = true;
   el.musicBtn.textContent = "🎵 Sea Music: On";
   ensureBgMusicPlayers();
   const startedFileMusic = playBgMusicTrack(bgMusicIndex);
-  if (!startedFileMusic) startSynthMusic();
+  if (!startedFileMusic && ctxA) startSynthMusic();
 }
 
 function stopMusic() {
@@ -376,9 +464,9 @@ function toggleMusic() {
 
 function unlockAudioAndMaybeStart() {
   const ctxA = ensureAudioCtx();
-  if (!ctxA) return;
-  if (ctxA.state === "suspended") ctxA.resume();
+  if (ctxA && ctxA.state === "suspended") ctxA.resume();
   if (state.running && !musicOn) startMusic();
+  if (!state.running && !state.mode) startMenuMusic();
 }
 
 function toggleFullscreen() {
@@ -756,6 +844,7 @@ function beginModeTransition(id) {
 }
 
 function startMode(id) {
+  stopMenuMusic(true);
   el.menu.classList.add("hidden");
   el.gameView.classList.remove("hidden");
   beginModeTransition(id);
@@ -769,6 +858,7 @@ function showMenu() {
   stopMusic();
   el.menu.classList.remove("hidden");
   el.gameView.classList.add("hidden");
+  startMenuMusic();
 }
 
 function tryThrowTrident(releaseX, releaseY) {
