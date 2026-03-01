@@ -514,7 +514,7 @@ const state = {
   running: false,
   trust: 0,
   firedEvents: new Set(),
-  ocean: { x: 370, y: 160, depth: 0, botDepth: 0, hp: 4, pearls: 0, dash: 0, hitCooldown: 0, enemies: [], pearlsMap: [] },
+  ocean: { x: 370, y: 160, depth: 0, botDepth: 0, hp: 4, pearls: 0, dash: 0, hitCooldown: 0, enemies: [], pearlsMap: [], bubbles: [] },
   emotion: { mask: 50, hidden: 20, botMask: 52, botHidden: 18, calm: 3, journal: 2 },
   dig: { layer: 0, botLayer: 0, truths: 0, boost: 0, finds: ["soil", "coins", "bones", "locket", "letter", "fear", "truth"], relics: 0 },
   mirror: { x: 70, mirrorX: 70, botX: 75, goal: 700, phase: 2, phaseTimer: 0, traps: [220, 340, 510], mirrorNoise: 0 },
@@ -553,6 +553,7 @@ const state = {
     coyote: 0,
     grounded: false,
     springHits: 0,
+    spawnLock: 24,
     platforms: [],
     pearlsMap: [],
   },
@@ -728,7 +729,7 @@ function setupMode(id) {
   el.summary.textContent = m.summary;
 
   if (id === "ocean") {
-    state.ocean = { x: 370, y: 160, depth: 0, botDepth: 0, hp: 4, pearls: 0, dash: 0, hitCooldown: 0, enemies: [], pearlsMap: [] };
+    state.ocean = { x: 370, y: 160, depth: 0, botDepth: 0, hp: 4, pearls: 0, dash: 0, hitCooldown: 0, enemies: [], pearlsMap: [], bubbles: [] };
     spawnOceanEntities();
     el.controls.innerHTML = '<button id="dashBtn">Dash Burst</button><span class="stat">Move: arrows / WASD</span>';
     document.getElementById("dashBtn").onclick = () => { if (state.ocean.dash <= 0) state.ocean.dash = 80; };
@@ -805,6 +806,7 @@ function setupMode(id) {
       coyote: 8,
       grounded: true,
       springHits: 0,
+      spawnLock: 24,
       platforms,
       pearlsMap: createOnlyUpPearls(platforms),
     };
@@ -1239,6 +1241,19 @@ function renderOnlyUp() {
   const jumpHeld = keys.has("arrowup") || keys.has("w") || keys.has(" ");
 
   if (!u.over) {
+    const starter = u.platforms[0];
+    if (u.spawnLock > 0) {
+      u.spawnLock -= 1;
+      if (!left && !right && !jumpHeld) {
+        const py = starter.y + Math.sin(Date.now() * 0.002 + starter.bob) * (starter.bobAmp ?? 2);
+        u.x = starter.x + starter.w * 0.5;
+        u.y = py - 12;
+        u.vx = 0;
+        u.vy = 0;
+        u.grounded = true;
+        u.coyote = 8;
+      }
+    }
     if (jumpHeld) u.jumpBuffer = 7;
     else u.jumpBuffer = Math.max(0, u.jumpBuffer - 1);
 
@@ -1383,6 +1398,20 @@ function renderOcean() {
   drawSeaBackdrop(o.depth + o.botDepth, [`rgb(40,${g + 80},${b + 90})`, `rgb(15,${g + 25},${b + 25})`, `rgb(4,${g - 2},${b - 22})`]);
   drawSeaLifeDecor(o.depth + o.botDepth);
 
+  const movingNow = keys.has("arrowleft") || keys.has("a") || keys.has("arrowright") || keys.has("d") || keys.has("arrowup") || keys.has("w") || keys.has("arrowdown") || keys.has("s");
+  if (movingNow || Math.random() < 0.25) {
+    o.bubbles.push({ x: o.x - 8 + (Math.random() - 0.5) * 6, y: o.y + 4 + (Math.random() - 0.5) * 6, r: 1.5 + Math.random() * 2.5, vy: -0.7 - Math.random() * 0.8, life: 40 + Math.random() * 25 });
+  }
+  o.bubbles.forEach((bub) => {
+    bub.y += bub.vy;
+    bub.life -= 1;
+    ctx.fillStyle = `rgba(185,245,255,${Math.max(0, bub.life / 65)})`;
+    ctx.beginPath();
+    ctx.arc(bub.x, bub.y, bub.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  o.bubbles = o.bubbles.filter((bub) => bub.life > 0);
+
   if (o.hitCooldown > 0) o.hitCooldown -= 1;
 
   o.enemies.forEach((en) => {
@@ -1398,6 +1427,9 @@ function renderOcean() {
     ctx.lineTo(en.x - 14, en.y + 4);
     ctx.closePath();
     ctx.fill();
+    ctx.fillStyle = "rgba(255,230,240,0.9)";
+    ctx.font = "10px Inter, system-ui";
+    ctx.fillText("ENEMY", en.x - 14, en.y - 10);
     if (Math.hypot(en.x - o.x, en.y - o.y) < 14 && o.hitCooldown <= 0) {
       o.hp = Math.max(0, o.hp - 1);
       o.hitCooldown = 28;
@@ -1426,6 +1458,11 @@ function renderOcean() {
   ctx.lineTo(o.x - 16, o.y + 5);
   ctx.closePath();
   ctx.fill();
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 12px Inter, system-ui";
+  ctx.fillText("YOU", o.x - 12, o.y - 12);
+  ctx.font = "12px Inter, system-ui";
+  ctx.fillText("Run from red fish", 560, 20);
 
   el.stats.innerHTML = "";
   el.stats.append(stat("Your depth", Math.floor(o.depth)));
