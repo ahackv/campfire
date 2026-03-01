@@ -31,8 +31,11 @@ const keys = new Set();
 
 let audioCtx = null;
 let musicOn = false;
-let memeRadioTimer = null;
+let memeSequencerTimer = null;
 let memeLoopIndex = 0;
+let currentTrack = null;
+let currentStep = 0;
+let nextStepTime = 0;
 
 const MEME_TRIGGERS = [
   { key: "jet 2 holiday", label: "Jet 2 Holiday", tones: [523.25, 659.25, 783.99] },
@@ -43,6 +46,15 @@ const MEME_TRIGGERS = [
   { key: "plh", label: "PLH", tones: [440, 554.37, 440, 659.25] },
   { key: "1,000,000,000 iq", label: "1,000,000,000 IQ", tones: [261.63, 329.63, 392, 523.25, 783.99] },
   { key: "1000000000 iq", label: "1,000,000,000 IQ", tones: [261.63, 329.63, 392, 523.25, 783.99] },
+];
+
+const MEME_RADIO_PLAYLIST = [
+  { label: "Jet 2 Holiday", tones: [523.25, 659.25, 783.99] },
+  { label: "Wait Wait Wait", tones: [349.23, 349.23, 293.66, 261.63] },
+  { label: "Wide Putin", tones: [246.94, 293.66, 369.99] },
+  { label: "Pongbib Fail", tones: [392, 329.63, 261.63] },
+  { label: "PLH", tones: [440, 554.37, 440, 659.25] },
+  { label: "1,000,000,000 IQ", tones: [261.63, 329.63, 392, 523.25, 783.99] },
 ];
 
 const FUNNY_NUMBERS = {
@@ -65,25 +77,84 @@ function ensureAudioCtx() {
   return audioCtx;
 }
 
-function playTone(freq, duration = 0.18, type = "triangle", volume = 0.03) {
+function playToneAt(freq, startAt, duration = 0.18, type = "triangle", volume = 0.03) {
+  if (!freq || freq <= 0) return;
   const ctxA = ensureAudioCtx();
   if (!ctxA) return;
   const osc = ctxA.createOscillator();
   const gain = ctxA.createGain();
   osc.type = type;
   osc.frequency.value = freq;
-  gain.gain.value = volume;
+  gain.gain.setValueAtTime(0.0001, startAt);
+  gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume), startAt + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
   osc.connect(gain);
   gain.connect(ctxA.destination);
-  osc.start();
-  osc.stop(ctxA.currentTime + duration);
+  osc.start(startAt);
+  osc.stop(startAt + duration + 0.02);
 }
 
-function playCurrentMemeLoop() {
-  const meme = MEME_TRIGGERS[memeLoopIndex % MEME_TRIGGERS.length];
-  playMemeJingle(meme.tones);
-  el.botMood.textContent = `Now playing: ${meme.label}`;
-  memeLoopIndex += 1;
+function playTone(freq, duration = 0.18, type = "triangle", volume = 0.03) {
+  const ctxA = ensureAudioCtx();
+  if (!ctxA) return;
+  playToneAt(freq, ctxA.currentTime, duration, type, volume);
+}
+
+function buildTrack(tones) {
+  const safeTones = tones.length ? tones : [261.63, 329.63, 392];
+  const lead = [];
+  const bass = [];
+  const pad = [];
+  for (let step = 0; step < 64; step++) {
+    lead.push(step % 2 === 0 ? safeTones[(step / 2) % safeTones.length] : 0);
+    bass.push(step % 4 === 0 ? safeTones[(Math.floor(step / 4)) % safeTones.length] / 2 : 0);
+    pad.push(step % 8 === 0 ? safeTones[(Math.floor(step / 8)) % safeTones.length] : 0);
+  }
+  return {
+    stepDuration: 0.19,
+    steps: 64,
+    lead,
+    bass,
+    pad,
+  };
+}
+
+function setCurrentTrack(index) {
+  const meme = MEME_RADIO_PLAYLIST[index % MEME_RADIO_PLAYLIST.length];
+  currentTrack = buildTrack(meme.tones);
+  currentStep = 0;
+  nextStepTime = ensureAudioCtx().currentTime + 0.05;
+  el.botMood.textContent = `Now playing full track: ${meme.label}`;
+}
+
+function scheduleStep() {
+  if (!currentTrack) return;
+  const step = currentStep % currentTrack.steps;
+  const t = nextStepTime;
+  const leadNote = currentTrack.lead[step];
+  const bassNote = currentTrack.bass[step];
+  const padNote = currentTrack.pad[step];
+
+  if (leadNote) playToneAt(leadNote, t, currentTrack.stepDuration * 0.95, "square", 0.02);
+  if (bassNote) playToneAt(bassNote, t, currentTrack.stepDuration * 0.9, "triangle", 0.03);
+  if (padNote) {
+    playToneAt(padNote, t, currentTrack.stepDuration * 2.6, "sine", 0.012);
+    playToneAt(padNote * 1.25, t, currentTrack.stepDuration * 2.2, "sine", 0.008);
+  }
+
+  currentStep += 1;
+  nextStepTime += currentTrack.stepDuration;
+
+  if (currentStep >= currentTrack.steps) {
+    memeLoopIndex = (memeLoopIndex + 1) % MEME_RADIO_PLAYLIST.length;
+    setCurrentTrack(memeLoopIndex);
+  }
+}
+
+function runSequencer() {
+  const ctxA = ensureAudioCtx();
+  if (!ctxA || !musicOn || !currentTrack) return;
+  while (nextStepTime < ctxA.currentTime + 0.22) scheduleStep();
 }
 
 function startMusic() {
@@ -95,15 +166,15 @@ function startMusic() {
   musicOn = true;
   el.musicBtn.textContent = "🎵 Meme Radio: On";
 
-  playCurrentMemeLoop();
-  memeRadioTimer = setInterval(playCurrentMemeLoop, 2600);
+  setCurrentTrack(memeLoopIndex);
+  memeSequencerTimer = setInterval(runSequencer, 50);
 }
 
 function stopMusic() {
   musicOn = false;
   el.musicBtn.textContent = "🎵 Meme Radio: Off";
-  if (memeRadioTimer) clearInterval(memeRadioTimer);
-  memeRadioTimer = null;
+  if (memeSequencerTimer) clearInterval(memeSequencerTimer);
+  memeSequencerTimer = null;
 }
 
 function toggleMusic() {
@@ -112,8 +183,10 @@ function toggleMusic() {
 }
 
 function playMemeJingle(tones) {
+  const ctxA = ensureAudioCtx();
+  if (!ctxA) return;
   tones.forEach((tone, i) => {
-    setTimeout(() => playTone(tone, 0.12, "square", 0.024), i * 95);
+    playToneAt(tone, ctxA.currentTime + i * 0.11, 0.14, "square", 0.026);
   });
 }
 
