@@ -4,6 +4,7 @@ const MODES = [
   { id: "dig", title: "⛏️ Beneath the Dirt", summary: "Dig layers, collect relics, and surface truths." },
   { id: "mirror", title: "🪞 Mirror World", summary: "Move in dual worlds and avoid hidden traps." },
   { id: "trident", title: "🔱 Trident Duel", summary: "Turn-based physics throws with wind, blood splashes, and death animations." },
+  { id: "text", title: "💬 Read Between the Lines", summary: "Text-only chat where your replies decide if your friend opens up." },
 ];
 
 const el = {
@@ -274,6 +275,12 @@ const state = {
     blood: [],
     deathAnim: null,
   },
+  text: {
+    round: 0,
+    openness: 0,
+    over: false,
+    lastHint: "",
+  },
 };
 
 let mouthOpen = false;
@@ -439,6 +446,15 @@ function setupMode(id) {
     el.controls.innerHTML = '<span class="stat">Your turn: click near your diver, pull back, release to throw.</span>';
     addBubble("Turn duel started. Drag with your mouse to aim and set power.");
   }
+  if (id === "text") {
+    state.text = { round: 0, openness: 0, over: false, lastHint: "Small pauses can mean a lot." };
+    el.controls.innerHTML = '<button id="gentleBtn">Gentle check-in</button><button id="lightBtn">Light joke</button><button id="directBtn">Be direct</button>';
+    document.getElementById("gentleBtn").onclick = () => { el.msgInput.value = "Hey, I am here if you want to talk."; el.msgInput.focus(); };
+    document.getElementById("lightBtn").onclick = () => { el.msgInput.value = "We can chill and talk if you want."; el.msgInput.focus(); };
+    document.getElementById("directBtn").onclick = () => { el.msgInput.value = "You said you're fine but it sounds heavy. Want to share?"; el.msgInput.focus(); };
+    addBubble("Text game back online. Type anything and read between the lines.");
+    addBubble("Friend: i'm fine, just tired i guess");
+  }
 }
 
 function startMode(id) {
@@ -543,10 +559,108 @@ el.composer.addEventListener("submit", (e) => {
   el.msgInput.value = "";
   addBubble(msg, "you");
   checkMemeMessage(msg);
+  if (state.mode === "text") {
+    handleTextModeMessage(msg);
+    return;
+  }
   setTimeout(() => addBubble(botReply(msg)), 120);
 });
 
 
+
+function handleTextModeMessage(msg) {
+  const t = state.text;
+  if (t.over) {
+    addBubble("Friend: wanna run another round? i think i needed this.");
+    return;
+  }
+
+  const tone = classifyMessage(msg);
+  const neutralReplies = [
+    "Friend: yeah maybe... hard to explain rn",
+    "Friend: idk, my brain's kinda loud tonight",
+    "Friend: i'm trying to act normal but it's weird",
+  ];
+  const supportiveReplies = [
+    "Friend: thanks... i've been low-key stressed for weeks",
+    "Friend: honestly, i haven't been sleeping much",
+    "Friend: i keep saying 'fine' so people stop asking",
+  ];
+  const harshReplies = [
+    "Friend: nvm then, forget i said anything",
+    "Friend: yeah, that's why i don't talk about it",
+    "Friend: it's cool, i'll deal with it myself",
+  ];
+
+  if (tone === "supportive") {
+    t.openness += 2;
+    state.trust += 1;
+    addBubble(supportiveReplies[t.round % supportiveReplies.length]);
+  } else if (tone === "harsh") {
+    t.openness -= 2;
+    state.trust -= 1;
+    addBubble(harshReplies[t.round % harshReplies.length]);
+  } else {
+    t.openness += 0;
+    addBubble(neutralReplies[t.round % neutralReplies.length]);
+  }
+
+  t.round += 1;
+  const subtleHints = [
+    "Hint: short replies + long pauses",
+    "Hint: avoids details about their day",
+    "Hint: jokes but changes subject quickly",
+    "Hint: says 'fine' again after heavy line",
+    "Hint: asks if you're still there",
+  ];
+  t.lastHint = subtleHints[Math.min(t.round, subtleHints.length - 1)];
+
+  if (t.round >= 5) {
+    t.over = true;
+    if (t.openness >= 4) {
+      markEventOnce("text-win", "victory");
+      addBubble("Ending: You noticed the signals. Friend opens up and says thanks for staying.");
+    } else if (t.openness <= -2) {
+      markEventOnce("text-fail", "fail");
+      addBubble("Ending: You missed the signs. Friend shuts down for now.");
+    } else {
+      addBubble("Ending: Mixed. You caught some signs, missed others.");
+    }
+  }
+}
+
+function renderTextMode() {
+  const t = state.text;
+  drawSeaBackdrop(t.round * 180 + t.openness * 22 + 90, ["#5ce0ff", "#3d83d0", "#2d2550"]);
+  drawSeaLifeDecor(t.round * 85 + 40);
+
+  ctx.fillStyle = "rgba(8, 22, 50, 0.62)";
+  ctx.fillRect(70, 48, 620, 244);
+  ctx.strokeStyle = "rgba(170, 245, 255, 0.65)";
+  ctx.strokeRect(70, 48, 620, 244);
+
+  ctx.fillStyle = "#dbf8ff";
+  ctx.font = "20px Inter, system-ui";
+  ctx.fillText("Read Between the Lines", 96, 84);
+  ctx.font = "15px Inter, system-ui";
+  ctx.fillStyle = "#b7d8ff";
+  ctx.fillText("Type anything in chat. Supportive replies increase openness.", 96, 112);
+  ctx.fillText(`Signal: ${t.lastHint || "Listen for what is not being said."}`, 96, 144);
+  ctx.fillText(`Round: ${t.round}/5`, 96, 176);
+  ctx.fillText(`Openness: ${t.openness}`, 96, 206);
+  ctx.fillText(t.over ? "Status: ended (type to keep chatting or switch modes)" : "Status: active conversation", 96, 236);
+
+  el.stats.innerHTML = "";
+  el.stats.append(stat("Round", `${t.round}/5`));
+  el.stats.append(stat("Openness", t.openness));
+  el.stats.append(stat("Trust", state.trust));
+  el.stats.append(stat("Status", t.over ? "ended" : "live"));
+  el.stats.append(stat("Theme", "feelings below words"));
+
+  el.status.textContent = t.over
+    ? (t.openness >= 4 ? "Great ending: your friend felt safe opening up." : t.openness <= -2 ? "Bad ending: your friend shut down." : "Mixed ending: you were partly supportive.")
+    : "Use chat to respond naturally and read hidden signals.";
+}
 
 function drawSeaBackdrop(seed = 0, palette = ["#49d2ff", "#1278bc", "#063a6f"]) {
   const wave = seed * 0.01;
@@ -965,6 +1079,7 @@ function frame() {
     if (state.mode === "dig") renderDig();
     if (state.mode === "mirror") renderMirror();
     if (state.mode === "trident") renderTrident();
+    if (state.mode === "text") renderTextMode();
   }
   requestAnimationFrame(frame);
 }
