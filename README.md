@@ -1,55 +1,61 @@
-# Beneath the Surface Arcade
+# Campus Voice (Hackathon MVP)
 
-A browser arcade game with six modes, animated bot teammate chat, and dynamic audio (background music + event SFX).
+A demo-ready civic engagement platform for secondary school, A-level, and university students.
 
-## Modes
+## Product summary
 
-- 🌊 Into the Deep: dive race with hazards, pearls, and dash timing.
-- 😃 Emotion Mask: balance visible calm against hidden pressure.
-- ⛏️ Beneath the Dirt: dig layers, collect relics, and surface truths.
-- 🪞 Mirror World: move through mirrored space and avoid hidden traps.
-- 🔱 Trident Duel: turn-based projectile duel with wind and HP.
-- 💬 Read Between the Lines: text-only conversation where tone affects outcomes.
+Campus Voice is a light social platform where students can learn civic basics, report local concerns, discuss solutions, vote on priorities, and generate action outputs (email + petition summaries) to help convert youth voice into real-world action.
 
-## Controls
+## MVP scope
 
-- Mode-specific buttons appear under the main canvas.
-- Movement modes support arrow keys and `WASD`.
-- Trident Duel uses mouse drag-and-release to aim and throw.
-- Chat input is available in every mode.
-- `Sea Music` toggles background music.
-- `Fullscreen` toggles immersive view.
+- Student account creation (local demo profile)
+- Homepage feed of local/community issues
+- Issue cards with voting counts
+- Discussion area with comments
+- New issue submission form
+- "Why this matters" education panel in plain language
+- Action hub to generate council email draft and petition summary
+- Light gamification (points, streaks, badge)
 
-## Audio Layout
+## Sample content included
 
-- Background music: `assets/music/`
-  - `mii-channel-music.mp3`
-  - `the-entertainer-fuk.mp3`
-- Menu/home playlist: `assets/music/menu/`
-  - `through-sea-cc0.ogg`
-  - `ocean-trance-cc0.ogg`
-- Sound effects: `assets/sfx/`
-  - `nothing-beats-a-jet2-holiday.mp3` (victory)
-  - `wait-wait-wait-what-the-hell.mp3` (chaos)
-  - `spongebob-fail.mp3` (fail)
+- Cambridge River Cam boat smoke pollution scenario preloaded in the issue feed.
 
-The game prefers file-based background music and falls back to synth sequencing if media playback is unavailable.
-Menu music rotates on the home screen and pauses when you enter a game mode.
+## User flow
 
-## Run Locally
+1. Student creates profile.
+2. Student browses issue cards.
+3. Student opens an issue, reads context, votes, and comments.
+4. Student can submit new issue.
+5. Student generates action output to share with council/community.
+6. Student earns points and badges through participation.
+
+## Recommended stack (for hackathon progression)
+
+- **Current MVP (this repo):** HTML, CSS, Vanilla JS + LocalStorage.
+- **Upgrade path:** Next.js + Supabase (Auth, Postgres, realtime comments) or React + Firebase.
+
+## Database schema (logical)
+
+- `users(id, name, level, points, streak, badges)`
+- `issues(id, title, location, why, created_by, created_at)`
+- `votes(id, issue_id, user_id, type)`
+- `comments(id, issue_id, user_id, body, created_at)`
+
+## Project structure
+
+```text
+.
+├── index.html      # App layout and sections
+├── styles.css      # Visual design
+├── app.js          # MVP state, interactions, local storage
+└── README.md
+```
+
+## Run locally
 
 ```bash
 python3 -m http.server 4173
 ```
 
-Open: `http://127.0.0.1:4173/index.html`
-
-## Screenshots
-
-### Gameplay 1
-
-![Gameplay screenshot 1](output/web-game/shot-0.png)
-
-### Gameplay 2
-
-![Gameplay screenshot 2](output/web-game/shot-1.png)
+Open <http://127.0.0.1:4173/index.html>
