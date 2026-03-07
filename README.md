@@ -1,54 +1,47 @@
 # Campus Voice (Ultra Hackathon MVP)
 
-## Product summary
+## What already existed (baseline)
 
-Campus Voice is a **student civic intelligence ecosystem** that combines:
-- real-style UK public issue exploration,
-- youth voting and evidence views,
-- AI-style explainers,
-- meme/joke engagement loops,
-- an interactive issue map,
-- and a replayable **Fix Your City** strategy simulation.
+The project already had:
+- issue explorer cards
+- student voting
+- scorecards/charts
+- civic simulation game
+- issue detail experience
+- basic public-issue style dataset
 
-## Why this version is stronger
+## Extensions added in this iteration
 
-Compared with a basic issue-posting site, this version adds:
-- entertainment hooks (hourly memes + fun voting),
-- gamification and civic ranks,
-- dynamic simulation with random events and multiple endings,
-- visual dashboards and student-vs-official priority gaps,
-- decision-ready output via a one-click Youth Mandate Brief.
+This update **extends** the existing platform (without removing baseline features) by adding:
 
-## MVP feature set implemented
+1. **Politics Humor Hub**
+   - 3 civic/political memes-jokes with funniest-vote interactions
+   - auto refresh cycle with hourly countdown logic
 
-1. **Real-Issue Explorer**
-   - UK-style government/council issues with source, category, chamber, credibility, and votes.
-2. **Issue Detail + Misinformation Trust Meter**
-   - evidence list, actions, discussion highlights, trust bar, and priority voting.
-3. **Political Meme & Joke Hub**
-   - 3 refreshed memes (hourly timer) and “vote funniest” interaction.
-4. **Youth Dashboard**
-   - scorecards + charts for top concerns and student-vs-official priority gap.
-5. **Interactive Issue Map**
-   - area hotspots that open top local issue quickly.
-6. **Fix Your City Game**
-   - 5 rounds, random events, multi-metric management, and multiple endings.
-7. **Gamification**
-   - civic XP and ranks: Observer → Voter → Community Voice → Policy Influencer → Youth Leader.
-8. **Youth Mandate Brief**
-   - generates judge/adult-friendly recommendation summary.
+2. **Future of Your City Simulator**
+   - projects city outcomes (pollution, transport, green investment, budget pressure)
+   - computed from current student voting patterns
 
-## Key sample issue included
+3. **Priority Comparison Engine**
+   - table comparing student priority rank vs official priority rank
+   - includes visible gap column
 
-- Cambridge River Cam boat emissions and air quality issue with evidence and actions.
+4. **AI Debate Mode (Issue detail)**
+   - two-agent debate snippets (economic vs environmental)
+   - student vote on debate side
 
-## Suggested next upgrade (post-hackathon)
+5. **Advanced game continuity**
+   - keeps existing game and expands round outcomes with random events,
+   - visible stat shifts,
+   - multiple endings
 
-- Next.js + TypeScript + Tailwind
-- Supabase/Firebase auth + DB
-- API route layer for data.gov.uk / council feeds
-- LLM integration for richer explainers and misinformation classification
-- map library (Leaflet/Mapbox)
+6. **Civic leaderboard + rank system**
+   - ranks: Observer, Voter, Community Voice, Policy Influencer, Youth Leader
+   - leaderboard blends sample users + current participant points
+
+7. **Interactive issue map via Leaflet**
+   - real map rendering with markers for issue locations
+   - click marker to open issue detail
 
 ## Run
 

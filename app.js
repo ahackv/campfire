@@ -23,7 +23,9 @@ const SAMPLE_ISSUES = [
       "Organise cross-school testimony session."
     ],
     comments: ["Add student sensor monitoring.", "Publish timeline tracker."],
-    trend: [38, 42, 50, 58, 62]
+    trend: [38, 42, 50, 58, 62],
+    coords: [52.2053, 0.1218],
+    debateVotes: { economic: 7, environmental: 12 }
   },
   {
     id: "uk-bus-fares",
@@ -39,7 +41,9 @@ const SAMPLE_ISSUES = [
     evidence: ["Fares linked with lower student mobility.", "Youth polling supports capped fare pilots."],
     actions: ["Submit youth fare impact statement.", "Recommend commuter-town pilot routes."],
     comments: ["Means-tested support should be included."],
-    trend: [31, 37, 42, 49, 55]
+    trend: [31, 37, 42, 49, 55],
+    coords: [51.5072, -0.1276],
+    debateVotes: { economic: 9, environmental: 5 }
   },
   {
     id: "county-library-hours",
@@ -55,7 +59,9 @@ const SAMPLE_ISSUES = [
     evidence: ["Exam-season demand exceeds opening hours.", "Quiet-space inequality affects outcomes."],
     actions: ["Propose 8-week evening pilot.", "Align bus schedule for safe returns."],
     comments: ["Need weekend extension too."],
-    trend: [25, 30, 36, 44, 49]
+    trend: [25, 30, 36, 44, 49],
+    coords: [52.335, 0.08],
+    debateVotes: { economic: 4, environmental: 11 }
   },
   {
     id: "district-housing-warmth",
@@ -71,7 +77,9 @@ const SAMPLE_ISSUES = [
     evidence: ["Damp complaint growth in student rentals.", "Cold housing linked with reduced learning outcomes."],
     actions: ["Publish inspection transparency dashboard.", "Target support in student-heavy zones."],
     comments: ["Clearer landlord accountability needed."],
-    trend: [24, 28, 34, 40, 44]
+    trend: [24, 28, 34, 40, 44],
+    coords: [52.45, 1.0],
+    debateVotes: { economic: 8, environmental: 6 }
   }
 ];
 
@@ -139,6 +147,13 @@ const RANDOM_EVENTS = [
   { text: "Random event: Committee meeting delayed.", effects: { trust: -3, budget: -2 } }
 ];
 
+const MOCK_LEADERBOARD = [
+  { name: "Aisha", points: 42 },
+  { name: "Tom", points: 35 },
+  { name: "Riya", points: 29 },
+  { name: "Ben", points: 22 }
+];
+
 const state = {
   user: null,
   issues: structuredClone(SAMPLE_ISSUES),
@@ -152,6 +167,9 @@ const state = {
     history: []
   }
 };
+
+let leafletMap;
+let leafletMarkersLayer;
 
 const els = {
   authForm: document.querySelector("#authForm"),
@@ -168,7 +186,10 @@ const els = {
   scorecards: document.querySelector("#scorecards"),
   priorityChart: document.querySelector("#priorityChart"),
   gapChart: document.querySelector("#gapChart"),
-  mapHotspots: document.querySelector("#mapHotspots"),
+  futureCityHeadline: document.querySelector("#futureCityHeadline"),
+  futureCityStats: document.querySelector("#futureCityStats"),
+  comparisonTable: document.querySelector("#comparisonTable"),
+  leaderboardList: document.querySelector("#leaderboardList"),
   briefBtn: document.querySelector("#briefBtn"),
   briefOutput: document.querySelector("#briefOutput"),
   dashboardView: document.querySelector("#dashboardView"),
@@ -206,6 +227,7 @@ function showDashboard() {
   els.dashboardView.classList.remove("hidden");
   els.detailView.classList.add("hidden");
   els.gameView.classList.add("hidden");
+  if (leafletMap) setTimeout(() => leafletMap.invalidateSize(), 50);
 }
 
 function showDetail() {
@@ -300,7 +322,9 @@ function refreshMemes() {
 
 function maybeRefreshMemes() {
   const hour = 1000 * 60 * 60;
-  if (!state.memes.length || Date.now() - state.lastMemeRefresh >= hour) refreshMemes();
+  if (!state.memes.length || Date.now() - state.lastMemeRefresh >= hour) {
+    refreshMemes();
+  }
 }
 
 function renderMemeTimer() {
@@ -369,25 +393,84 @@ function renderCharts() {
   drawBars(els.gapChart, labels, data.map((i) => Math.abs(priorityGap(i))), "#a78bfa");
 }
 
-function renderMap() {
-  const topByArea = new Map();
-  state.issues.forEach((issue) => {
-    const current = topByArea.get(issue.location);
-    if (!current || current.studentVotes.high < issue.studentVotes.high) topByArea.set(issue.location, issue);
-  });
-  els.mapHotspots.innerHTML = "";
-  [...topByArea.entries()].forEach(([area, issue]) => {
-    const node = document.createElement("button");
-    node.className = "hotspot";
-    node.type = "button";
-    node.dataset.open = issue.id;
-    node.innerHTML = `<strong>${area}</strong><br /><span class="meta">Top issue: ${issue.category}</span>`;
-    els.mapHotspots.append(node);
+function renderFutureCity() {
+  const totals = state.issues.reduce(
+    (acc, issue) => {
+      acc.env += issue.category === "Environment" ? issue.studentVotes.high : 0;
+      acc.transport += issue.category === "Transport" ? issue.studentVotes.high : 0;
+      acc.education += issue.category === "Education" ? issue.studentVotes.high : 0;
+      acc.housing += issue.category === "Housing" ? issue.studentVotes.high : 0;
+      return acc;
+    },
+    { env: 0, transport: 0, education: 0, housing: 0 }
+  );
+
+  const pollutionCut = Math.min(35, Math.round(totals.env / 2));
+  const publicTransportUptick = Math.min(40, Math.round(totals.transport / 2));
+  const greenSpaceInvest = Math.min(30, Math.round((totals.env + totals.housing) / 4));
+  const budgetPressure = Math.min(45, Math.round((totals.transport + totals.education) / 3));
+
+  els.futureCityHeadline.textContent = "Cambridge 2030 – Based on student priorities";
+  els.futureCityStats.innerHTML = `
+    <div class="scorecard"><strong>${pollutionCut}%</strong><br />Air pollution reduced (projected)</div>
+    <div class="scorecard"><strong>${publicTransportUptick}%</strong><br />Public transport use increase</div>
+    <div class="scorecard"><strong>${greenSpaceInvest}%</strong><br />Green-space investment push</div>
+    <div class="scorecard"><strong>${budgetPressure}%</strong><br />Budget constraint pressure</div>
+  `;
+}
+
+function renderPriorityComparison() {
+  const rows = [...state.issues]
+    .sort((a, b) => b.studentVotes.high - a.studentVotes.high)
+    .map((issue, idx) => {
+      const govRank = [...state.issues].sort((x, y) => y.officialPriority - x.officialPriority).findIndex((x) => x.id === issue.id) + 1;
+      return `<tr><td>${issue.title}</td><td>#${idx + 1}</td><td>#${govRank}</td><td>${priorityGap(issue)}</td></tr>`;
+    })
+    .join("");
+
+  els.comparisonTable.innerHTML = `
+    <thead><tr><th>Issue</th><th>Student priority</th><th>Government priority</th><th>Gap</th></tr></thead>
+    <tbody>${rows}</tbody>
+  `;
+}
+
+function renderLeaderboard() {
+  const board = [...MOCK_LEADERBOARD];
+  if (state.user) board.push({ name: `${state.user.name} (You)`, points: state.user.votesCast });
+  board.sort((a, b) => b.points - a.points);
+  els.leaderboardList.innerHTML = board.slice(0, 8).map((entry, idx) => `<div class="issue-card"><strong>#${idx + 1} ${entry.name}</strong><p class="meta">${entry.points} civic points • ${civiRank(entry.points)}</p></div>`).join("");
+}
+
+function initLeafletMap() {
+  if (leafletMap || typeof L === "undefined") return;
+  leafletMap = L.map("leafletMap").setView([52.2053, 0.1218], 6);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: "&copy; OpenStreetMap"
+  }).addTo(leafletMap);
+  leafletMarkersLayer = L.layerGroup().addTo(leafletMap);
+}
+
+function renderLeafletMarkers() {
+  if (!leafletMap || !leafletMarkersLayer) return;
+  leafletMarkersLayer.clearLayers();
+  filteredIssues().forEach((issue) => {
+    const marker = L.marker(issue.coords).addTo(leafletMarkersLayer);
+    marker.bindPopup(`<strong>${issue.title}</strong><br/>${issue.location}<br/><button data-map-open='${issue.id}'>Open</button>`);
+    marker.on("click", () => {
+      state.selectedIssueId = issue.id;
+      renderDetail();
+      showDetail();
+    });
   });
 }
 
 function aiExplainer(issue) {
   return `${issue.location}: ${issue.chamber} is handling “${issue.title}”. Students ranked it highly (${issue.studentVotes.high} high-priority votes). Main evidence: ${issue.evidence[0]}`;
+}
+
+function debateTopic(issue) {
+  return `Should policy on “${issue.title}” become stricter now?`;
 }
 
 function renderDetail() {
@@ -413,6 +496,20 @@ function renderDetail() {
     <div class="detail-evidence"><h4>What students can do</h4><ul>${actions}</ul></div>
     <div class="detail-evidence"><h4>Youth discussion</h4><ul>${comments}</ul></div>
 
+    <div class="detail-evidence">
+      <h4>AI Debate Mode</h4>
+      <p><strong>Topic:</strong> ${debateTopic(issue)}</p>
+      <p><strong>Agent A (Economic):</strong> Stricter rules can increase operating costs and ticket prices. We should phase them in.</p>
+      <p><strong>Agent B (Environmental):</strong> Delays increase health costs and pollution harm. Fast standards protect residents and students.</p>
+      <p><strong>Agent A:</strong> Pair regulation with grants so businesses can adapt without service loss.</p>
+      <p><strong>Agent B:</strong> Agreed on support, but timeline must be firm to avoid endless delay.</p>
+      <p class="meta">Debate votes — Economic: ${issue.debateVotes.economic} | Environmental: ${issue.debateVotes.environmental}</p>
+      <div class="vote-line">
+        <button data-debate-vote="economic" type="button">Vote Economic argument</button>
+        <button data-debate-vote="environmental" type="button">Vote Environmental argument</button>
+      </div>
+    </div>
+
     <form id="voteForm" class="vote-line">
       <select id="voteType">
         <option value="high">Vote: High priority</option>
@@ -432,13 +529,24 @@ function renderDetail() {
     renderAll();
     showDetail();
   });
+
+  document.querySelectorAll("button[data-debate-vote]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const side = btn.dataset.debateVote;
+      issue.debateVotes[side] += 1;
+      if (state.user) state.user.votesCast += 1;
+      save();
+      renderAll();
+      showDetail();
+    });
+  });
 }
 
 function generateBrief() {
   const data = filteredIssues();
   const top = [...data].sort((a, b) => b.studentVotes.high - a.studentVotes.high).slice(0, 5);
   const lines = top.map((item, idx) => `${idx + 1}. ${item.title} — ${item.studentVotes.high} high-priority votes`).join("\n");
-  els.briefOutput.textContent = `Youth Mandate Brief\n-------------------\nTop 5 priorities:\n${lines}\n\nIf young people ran the city this week:\n- Environment and transport get higher immediate priority.\n- Youth-facing service access (library, bus costs) rises above current official weighting.\n\nRecommended next step:\nInvite 2 youth reps to the next committee session and publish progress in 30 days.`;
+  els.briefOutput.textContent = `Youth Mandate Brief\n-------------------\nTop 5 priorities:\n${lines}\n\nIf young people ran the city this week:\n- Environment and transport get higher immediate priority.\n- Youth-facing service access rises above current official weighting.\n\nRecommended next step:\nInvite 2 youth reps to the next committee session and publish progress in 30 days.`;
 }
 
 function applyEventEffects(event) {
@@ -521,6 +629,7 @@ function attachEvents() {
     state.user = { name: els.nameInput.value.trim(), level: els.levelInput.value, votesCast: 0 };
     save();
     renderProfile();
+    renderLeaderboard();
   });
 
   els.areaFilter.addEventListener("change", () => {
@@ -558,14 +667,7 @@ function attachEvents() {
     save();
     renderProfile();
     renderMemes();
-  });
-
-  els.mapHotspots.addEventListener("click", (event) => {
-    const target = event.target.closest("button[data-open]");
-    if (!(target instanceof HTMLElement)) return;
-    state.selectedIssueId = target.dataset.open;
-    renderDetail();
-    showDetail();
+    renderLeaderboard();
   });
 
   els.backToDashboardBtn.addEventListener("click", showDashboard);
@@ -584,7 +686,11 @@ function renderAll() {
   renderMemes();
   renderScorecards();
   renderCharts();
-  renderMap();
+  renderFutureCity();
+  renderPriorityComparison();
+  renderLeaderboard();
+  initLeafletMap();
+  renderLeafletMarkers();
   renderDetail();
 }
 
@@ -592,4 +698,8 @@ load();
 attachEvents();
 showDashboard();
 renderAll();
-setInterval(renderMemeTimer, 60000);
+setInterval(() => {
+  maybeRefreshMemes();
+  renderMemeTimer();
+  renderMemes();
+}, 60000);
