@@ -3,100 +3,136 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Beneath the Surface Arcade</title>
-    <style>
-      :root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; }
-      * { box-sizing: border-box; }
-      body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px; background: radial-gradient(circle at 20% 10%, #62dcff, #2b7dcc 45%, #1f2a6b 75%, #120d21); color: #f7f3ff; }
-      .app { width: min(1260px, 100%); border: 1px solid rgba(154, 244, 255, 0.55); border-radius: 18px; overflow: hidden; background: linear-gradient(180deg, rgba(8,31,62,0.96), rgba(17,12,37,0.96)); box-shadow: 0 18px 45px rgba(7, 27, 68, 0.55); }
-      .header { padding: 14px 18px; border-bottom: 1px solid rgba(185, 155, 232, 0.25); }
-      .header h1 { margin: 0; font-size: clamp(1.2rem, 2.4vw, 1.6rem); }
-      .header p { margin: 6px 0 0; color: #d9cbef; }
-
-      .menu { padding: 16px; }
-      .cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
-      .card { border: 1px solid rgba(134, 241, 255, 0.5); border-radius: 14px; background: linear-gradient(160deg, rgba(78,144,255,0.18), rgba(255,134,214,0.1)); padding: 10px; display: grid; gap: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.24); }
-      .thumb { width: 100%; height: 92px; image-rendering: pixelated; border: 1px solid rgba(220, 201, 248, 0.25); border-radius: 8px; background: #1d1533; }
-      .badge { width: fit-content; font-size: .72rem; border: 1px solid rgba(187, 247, 255, 0.65); border-radius: 999px; padding: 2px 8px; background: rgba(92, 211, 255, 0.26); }
-      h3 { margin: 0; font-size: 1rem; }
-      .card p { margin: 0; color: #dacfee; font-size: .9rem; }
-
-      button, .linkBtn {
-        border: 1px solid rgba(180, 252, 255, 0.62);
-        border-radius: 10px;
-        background: linear-gradient(135deg, rgba(88, 212, 255, 0.42), rgba(211, 120, 255, 0.3));
-        color: #fff;
-        padding: 9px 12px;
-        cursor: pointer;
-        text-decoration: none;
-        width: fit-content;
-        transition: transform .12s ease, filter .12s ease;
-      }
-      button:hover, .linkBtn:hover { transform: translateY(-1px) scale(1.01); filter: brightness(1.08); }
-
-      .hidden { display: none !important; }
-      .gameView { min-height: 720px; display: grid; grid-template-rows: auto 1fr; }
-      .topbar { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid rgba(185, 155, 232, 0.25); }
-      .topbar small { color: #d7caed; }
-      .layout { display: grid; grid-template-columns: 1.15fr .85fr; min-height: 660px; }
-      .play { border-right: 1px solid rgba(185, 155, 232, 0.2); padding: 12px; display: grid; gap: 10px; align-content: start; }
-      .chatZone { display: grid; grid-template-rows: auto 1fr auto; }
-      .panel { border: 1px solid rgba(220, 201, 248, 0.35); border-radius: 10px; background: rgba(255,255,255,.04); padding: 10px; }
-      .stats { display: grid; gap: 6px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
-      .stat { color: #e9e0f8; font-size: .92rem; }
-      #gameCanvas { width: 100%; max-width: 760px; height: 340px; border: 1px solid rgba(156, 245, 255, 0.7); border-radius: 12px; background: #0f2038; image-rendering: pixelated; box-shadow: inset 0 0 50px rgba(0,0,0,0.35), 0 0 26px rgba(82,199,255,0.28); }
-      .controls { display: flex; flex-wrap: wrap; gap: 8px; }
-      .avatar { display: grid; grid-template-columns: 92px 1fr; gap: 10px; align-items: center; border-bottom: 1px solid rgba(185, 155, 232, 0.25); padding: 10px; }
-      #botFace { width: 80px; height: 80px; image-rendering: pixelated; border: 1px solid rgba(220, 201, 248, 0.35); border-radius: 8px; background: #18132b; }
-      #botMood { color: #d8caee; font-size: .9rem; }
-      .chat { overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-      .bubble { max-width: 86%; border-radius: 10px; padding: 8px 10px; line-height: 1.4; }
-      .bot { align-self: flex-start; background: rgba(142,118,178,.25); border: 1px solid rgba(195,164,242,.35); }
-      .you { align-self: flex-end; background: rgba(80,164,149,.2); border: 1px solid rgba(134,224,207,.35); }
-      .composer { display: grid; grid-template-columns: 1fr auto; gap: 8px; border-top: 1px solid rgba(185,155,232,.25); padding: 10px; }
-      input { border: 1px solid rgba(220, 201, 248, 0.45); border-radius: 10px; background: rgba(247,236,255,.08); color: #fff; padding: 10px; }
-      @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } .play { border-right: none; border-bottom: 1px solid rgba(185, 155, 232, 0.2);} }
-    </style>
+    <title>Campus Voice MVP</title>
+    <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main class="app">
-      <header class="header">
-        <h1>🕹️ Beneath the Surface Arcade</h1>
-        <p>7 sea-themed game options with brighter arcade visuals + bot teammate chat in every mode. Itch.io-ready (fullscreen-friendly).</p>
-      </header>
+    <header class="topbar">
+      <div>
+        <h1>🗳️ Campus Voice</h1>
+        <p>Youth-powered civic action for schools, colleges, and universities.</p>
+      </div>
+      <div id="profilePill" class="profile-pill hidden"></div>
+    </header>
 
-      <section id="menu" class="menu">
-        <div class="cards" id="cards"></div>
+    <main id="homeView" class="layout">
+      <section class="panel" id="comparisonPanel">
+        <h2>Why this upgrade matters</h2>
+        <div class="compare-grid">
+          <article>
+            <h3>Old (passive website)</h3>
+            <ul>
+              <li>Good for already-engaged students.</li>
+              <li>Lets users post and discuss issues.</li>
+              <li>Harder to show direct cause-and-effect.</li>
+            </ul>
+          </article>
+          <article>
+            <h3>New (interactive game)</h3>
+            <ul>
+              <li>Makes democracy personal and visual.</li>
+              <li>Shows consequences of action vs inaction.</li>
+              <li>Teaches misinformation risks through play.</li>
+            </ul>
+          </article>
+        </div>
       </section>
 
-      <section id="gameView" class="gameView hidden">
-        <div class="topbar">
-          <small id="modeTitle">Mode</small>
-          <div style="display:flex; gap:8px;"><button id="musicBtn">🎵 Sea Music: Off</button><button id="fullBtn">⛶ Fullscreen</button><button id="backBtn">← Back to menu</button></div>
+      <section class="panel" id="authPanel">
+        <h2>Get Started</h2>
+        <p>Create a student profile (demo only) to join local issue discussions.</p>
+        <form id="authForm" class="stack">
+          <label>
+            Name
+            <input id="nameInput" required placeholder="e.g. Maya Singh" />
+          </label>
+          <label>
+            Education level
+            <select id="levelInput">
+              <option>Secondary School</option>
+              <option>A-level</option>
+              <option>University</option>
+            </select>
+          </label>
+          <button type="submit">Join Campus Voice</button>
+        </form>
+      </section>
+
+      <section class="panel" id="gameIntroPanel">
+        <h2>🎮 Your Town, Your Choices</h2>
+        <p>
+          A short scenario game where civic choices affect visible town stats:
+          Youth Voice, Public Trust, Community Wellbeing, Environment, and Misinformation Risk.
+        </p>
+        <button id="startGameBtn" type="button">Start interactive game</button>
+      </section>
+
+      <section class="panel" id="learnPanel">
+        <h2>Why democracy matters</h2>
+        <ul>
+          <li>Your vote shapes local decisions like transport, housing, and clean air rules.</li>
+          <li>Community feedback pushes councils to investigate ignored problems.</li>
+          <li>Learning civic basics early protects against misinformation.</li>
+        </ul>
+      </section>
+
+      <section class="panel" id="issuesPanel">
+        <div class="split-head">
+          <h2>Local issues feed</h2>
+          <span id="issueCount" class="badge"></span>
         </div>
-        <div class="layout">
-          <section class="play">
-            <div id="summary" class="panel"></div>
-            <div id="stats" class="panel stats"></div>
-            <canvas id="gameCanvas" width="760" height="340"></canvas>
-            <div id="controls" class="panel controls"></div>
-            <div id="status" class="panel"></div>
-          </section>
-          <section class="chatZone">
-            <div class="avatar">
-              <canvas id="botFace" width="32" height="32"></canvas>
-              <div id="botMood">Bot teammate online.</div>
-            </div>
-            <section id="chat" class="chat" aria-live="polite"></section>
-            <form id="composer" class="composer">
-              <input id="msgInput" placeholder="Message bot teammate..." />
-              <button type="submit">Send</button>
-            </form>
-          </section>
+        <p class="muted">Open a card to view full discussion in a dedicated screen.</p>
+        <div id="issuesList" class="issues-grid"></div>
+      </section>
+
+      <section class="panel" id="submitPanel">
+        <h2>Report a concern</h2>
+        <form id="issueForm" class="stack">
+          <label>Issue title <input id="issueTitle" required /></label>
+          <label>Location <input id="issueLocation" required /></label>
+          <label>Why this matters <textarea id="issueWhy" rows="3" required></textarea></label>
+          <button type="submit">Post issue</button>
+        </form>
+      </section>
+
+      <section class="panel" id="actionPanel">
+        <h2>Turn voices into action</h2>
+        <div class="stack">
+          <button id="emailBtn">Generate council email draft</button>
+          <button id="petitionBtn">Generate petition summary</button>
+          <pre id="actionOutput" class="output">Action outputs will appear here...</pre>
         </div>
       </section>
     </main>
 
-    <script type="module" src="./game.js"></script>
+    <main id="discussionView" class="focused-view hidden">
+      <section class="panel focused-shell">
+        <div class="split-head">
+          <h2>Discussion + voting</h2>
+          <button id="backToHomeBtn" type="button">← Back to feed</button>
+        </div>
+        <p class="muted">Vote, comment, and build solutions with other students.</p>
+        <div id="activeIssue"></div>
+      </section>
+    </main>
+
+    <main id="gameView" class="focused-view hidden">
+      <section class="panel focused-shell">
+        <div class="split-head">
+          <h2>Your Town, Your Choices</h2>
+          <button id="exitGameBtn" type="button">← Exit game</button>
+        </div>
+        <p class="muted" id="roundLabel"></p>
+        <div id="statsPanel" class="stats-grid"></div>
+        <article class="scenario-card">
+          <h3 id="scenarioTitle"></h3>
+          <p id="scenarioDescription"></p>
+        </article>
+        <div id="choicesList" class="choices-grid"></div>
+        <pre id="gameFeedback" class="output">Make a choice to see what changes.</pre>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
   </body>
 </html>
