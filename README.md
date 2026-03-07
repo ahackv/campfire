@@ -1,47 +1,62 @@
-# Campus Voice (Ultra Hackathon MVP)
+# CivicSpark (Hackathon MVP)
 
-## What already existed (baseline)
+## 1) Current codebase analysis (before this update)
 
 The project already had:
-- issue explorer cards
-- student voting
-- scorecards/charts
-- civic simulation game
-- issue detail experience
-- basic public-issue style dataset
+- issue cards and student voting
+- issue detail page
+- civic stats dashboard elements
+- a multi-round city simulation game with random events
+- sample public-issue data and local persistence
 
-## Extensions added in this iteration
+Main weaknesses observed:
+- too many features visible at once (high cognitive load)
+- weak first-impression hook despite rich functionality
+- game value not visually front-and-center
 
-This update **extends** the existing platform (without removing baseline features) by adding:
+## 2) Cleaner UI structure applied
 
-1. **Politics Humor Hub**
-   - 3 civic/political memes-jokes with funniest-vote interactions
-   - auto refresh cycle with hourly countdown logic
+Homepage now follows a simplified, high-impact flow:
+1. Hero + strong question/hook
+2. Featured civic issue (personalized framing)
+3. Game entry (“Future of Your City”)
+4. 60-second civic stories
+5. Student vs official priority insights
 
-2. **Future of Your City Simulator**
-   - projects city outcomes (pollution, transport, green investment, budget pressure)
-   - computed from current student voting patterns
+## 3) New additions in this iteration
 
-3. **Priority Comparison Engine**
-   - table comparing student priority rank vs official priority rank
-   - includes visible gap column
+### Animated background system
+- Added subtle ambient gradient + floating particles.
+- Lightweight CSS animation with readability preserved.
+- Supports dark/light mode via `prefers-color-scheme`.
 
-4. **AI Debate Mode (Issue detail)**
-   - two-agent debate snippets (economic vs environmental)
-   - student vote on debate side
+### 60 Second Civic Stories
+- Added shorts-style vertical video cards.
+- Uses placeholder videos now (easy swap to API-generated content later).
+- Auto-refresh cycle logic on hourly cadence + countdown timer.
 
-5. **Advanced game continuity**
-   - keeps existing game and expands round outcomes with random events,
-   - visible stat shifts,
-   - multiple endings
+### Game improvements (existing game kept and expanded)
+- Stronger visual feedback using stat delta indicators per action.
+- Clear immediate consequences in game feedback.
+- Multiple ending summaries + shareable result card.
 
-6. **Civic leaderboard + rank system**
-   - ranks: Observer, Voter, Community Voice, Policy Influencer, Youth Leader
-   - leaderboard blends sample users + current participant points
+### Student vs officials comparison
+- Added clean side-by-side comparison bars for each issue.
+- Shows relative student vs official priority intensity.
 
-7. **Interactive issue map via Leaflet**
-   - real map rendering with markers for issue locations
-   - click marker to open issue detail
+### More personal issue cards
+Each card now clearly answers:
+- what the issue is,
+- why it matters to students,
+- what happens if nothing changes,
+- what students want.
+
+## 4) Performance and UX notes
+
+- Video elements use `preload="metadata"` and `loading="lazy"`.
+- Background animation kept subtle and low-cost.
+- Layout remains responsive for mobile.
+- Core functionality preserved (issue voting, details, simulation flow, persistence).
 
 ## Run
 
