@@ -21,8 +21,8 @@
 
     <main id="dashboardView" class="layout">
       <section class="panel hero">
-        <h2>What kind of city will your generation build?</h2>
-        <p>Play a 5-year city simulation, vote on real civic issues, and compare student priorities with official ones.</p>
+        <h2>What would your city look like if students made the decisions?</h2>
+        <p>Real UK civic issues. 5-year simulation. Clear impact in under 60 seconds.</p>
         <form id="authForm" class="inline-form">
           <input id="nameInput" required placeholder="Your name" />
           <select id="levelInput">
@@ -61,10 +61,15 @@
 
       <section class="panel">
         <div class="split-head">
-          <h2>60 Second Civic Stories</h2>
+          <h2>Civic Explained in 60 Seconds</h2>
           <span id="storyTimer" class="badge">Refreshing...</span>
         </div>
-        <div id="storiesList" class="shorts-grid"></div>
+        <p class="meta">AI-style whiteboard explainers with hourly refreshed scripts.</p>
+        <div class="whiteboard-wrap">
+          <canvas id="whiteboardCanvas" width="760" height="410"></canvas>
+          <article id="storyList" class="issue-card"></article>
+        </div>
+        <audio id="calmAudio" controls loop src="./assets/music/menu/through-sea-cc0.ogg"></audio>
       </section>
 
       <section class="panel">

@@ -1,62 +1,76 @@
 # CivicSpark (Hackathon MVP)
 
-## 1) Current codebase analysis (before this update)
+## 1) Analysis of existing project
 
-The project already had:
-- issue cards and student voting
-- issue detail page
-- civic stats dashboard elements
-- a multi-round city simulation game with random events
-- sample public-issue data and local persistence
+Before this update, CivicSpark already had:
+- issue discovery and voting,
+- issue detail pages,
+- a playable civic simulation,
+- local persistence,
+- basic comparison and visual polish.
 
-Main weaknesses observed:
-- too many features visible at once (high cognitive load)
-- weak first-impression hook despite rich functionality
-- game value not visually front-and-center
+### Weaknesses found
+- too many parallel elements competing for attention,
+- weak first-10-second hook,
+- placeholder civic story section not convincing,
+- limited live public-data feel.
 
-## 2) Cleaner UI structure applied
+## 2) Simplified UI structure applied
 
-Homepage now follows a simplified, high-impact flow:
-1. Hero + strong question/hook
-2. Featured civic issue (personalized framing)
-3. Game entry (“Future of Your City”)
-4. 60-second civic stories
-5. Student vs official priority insights
+Homepage flow now:
+1. Hero question/hook
+2. Featured issue card
+3. Main game entry
+4. Civic Explained in 60 Seconds (whiteboard)
+5. Student vs official comparison
+6. Full issue cards below
 
-## 3) New additions in this iteration
+## 3) Government issue data integration
 
-### Animated background system
-- Added subtle ambient gradient + floating particles.
-- Lightweight CSS animation with readability preserved.
-- Supports dark/light mode via `prefers-color-scheme`.
+Added live ingestion from UK Parliament Petitions API (with fallback to existing curated issues):
+- fetches open petitions,
+- classifies into civic categories,
+- generates student-friendly summaries,
+- merges into existing issue feed.
 
-### 60 Second Civic Stories
-- Added shorts-style vertical video cards.
-- Uses placeholder videos now (easy swap to API-generated content later).
-- Auto-refresh cycle logic on hourly cadence + countdown timer.
+## 4) Whiteboard civic explainer system
 
-### Game improvements (existing game kept and expanded)
-- Stronger visual feedback using stat delta indicators per action.
-- Clear immediate consequences in game feedback.
-- Multiple ending summaries + shareable result card.
+Replaced generic placeholders with a whiteboard animation module:
+- script auto-generated from real/top issues,
+- text written onto canvas progressively,
+- hourly refresh cycle,
+- calm background music track in-section.
 
-### Student vs officials comparison
-- Added clean side-by-side comparison bars for each issue.
-- Shows relative student vs official priority intensity.
+## 5) Game redesign improvements
 
-### More personal issue cards
-Each card now clearly answers:
-- what the issue is,
+Kept existing game and upgraded:
+- clearer city metrics,
+- random events,
+- branching decisions,
+- visible stat delta feedback,
+- shareable ending card.
+
+## 6) Student vs government comparison
+
+Added clean comparison bars for each issue:
+- student priority intensity,
+- official priority intensity,
+- clear at-a-glance mismatch signal.
+
+## 7) Issue card improvements
+
+Each card now explicitly answers:
+- what is happening,
 - why it matters to students,
-- what happens if nothing changes,
-- what students want.
+- what happens if ignored,
+- what actions students want.
 
-## 4) Performance and UX notes
+## 8) Performance and UX guardrails
 
-- Video elements use `preload="metadata"` and `loading="lazy"`.
-- Background animation kept subtle and low-cost.
-- Layout remains responsive for mobile.
-- Core functionality preserved (issue voting, details, simulation flow, persistence).
+- lightweight CSS background animation,
+- canvas explainer animation (no heavy video pipeline required for MVP),
+- hourly refresh cadence,
+- responsive layout maintained.
 
 ## Run
 
