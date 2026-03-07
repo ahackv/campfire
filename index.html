@@ -7,22 +7,20 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="bg-ambient" aria-hidden="true">
-      <span></span><span></span><span></span><span></span><span></span>
-    </div>
+    <div class="bg-ambient" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
 
     <header class="topbar">
       <div>
         <h1>✨ CivicSpark</h1>
-        <p>Democracy that feels personal, fast, and playable.</p>
+        <p>Politics at TikTok speed, with real-world impact.</p>
       </div>
       <div id="profilePill" class="profile-pill hidden"></div>
     </header>
 
-    <main id="dashboardView" class="layout">
+    <main id="homeView" class="view">
       <section class="panel hero">
         <h2>What would your city look like if students made the decisions?</h2>
-        <p>Real UK civic issues. 5-year simulation. Clear impact in under 60 seconds.</p>
+        <p>4 focused experiences. No clutter. Real issues, fast choices, visible impact.</p>
         <form id="authForm" class="inline-form">
           <input id="nameInput" required placeholder="Your name" />
           <select id="levelInput">
@@ -34,18 +32,62 @@
         </form>
       </section>
 
-      <section class="panel featured">
-        <div class="split-head">
-          <h2>Featured issue</h2>
-          <button id="startGameBtn" type="button">Play Future of Your City</button>
-        </div>
-        <article id="featuredIssue"></article>
+      <section class="panel nav-grid">
+        <button class="nav-btn" data-open-view="swipe">Start Making Decisions</button>
+        <button class="nav-btn" data-open-view="game">Play the City Game</button>
+        <button class="nav-btn" data-open-view="stats">View Live Student Stats</button>
+        <button class="nav-btn" data-open-view="issues">Explore Real Issues</button>
       </section>
+    </main>
 
+    <main id="swipeView" class="view hidden">
       <section class="panel">
         <div class="split-head">
-          <h2>Local issue cards</h2>
-          <span id="issueCount" class="badge"></span>
+          <h2>Swipe Decisions</h2>
+          <button data-open-view="home">← Back</button>
+        </div>
+        <article id="swipeCard" class="swipe-card"></article>
+      </section>
+    </main>
+
+    <main id="gameView" class="view hidden">
+      <section class="panel">
+        <div class="split-head">
+          <h2>Future of Your City (5 Years)</h2>
+          <button data-open-view="home">← Back</button>
+        </div>
+        <p id="gameRoundLabel" class="meta"></p>
+        <div id="gameStats" class="stats-grid"></div>
+        <article class="issue-card">
+          <h3 id="gameScenarioTitle"></h3>
+          <p id="gameScenarioDescription"></p>
+          <p id="gameEvent" class="meta"></p>
+        </article>
+        <label class="stack">Choose your action
+          <select id="gameChoiceSelect"></select>
+        </label>
+        <button id="confirmGameChoiceBtn" type="button">Confirm action</button>
+        <pre id="gameFeedback" class="output"></pre>
+        <div id="gameResultCard" class="result-card hidden"></div>
+      </section>
+    </main>
+
+    <main id="statsView" class="view hidden">
+      <section class="panel">
+        <div class="split-head">
+          <h2>Students vs Officials</h2>
+          <button data-open-view="home">← Back</button>
+        </div>
+        <div id="statsSummary" class="stats-grid"></div>
+        <div id="comparisonBars" class="issues-grid"></div>
+      </section>
+    </main>
+
+    <main id="issuesView" class="view hidden">
+      <section class="panel">
+        <div class="split-head">
+          <h2>Real Government Issues Explorer</h2>
+          <button data-open-view="home">← Back</button>
         </div>
         <div class="filters">
           <select id="areaFilter"></select>
@@ -57,56 +99,6 @@
           </select>
         </div>
         <div id="issuesList" class="issues-grid"></div>
-      </section>
-
-      <section class="panel">
-        <div class="split-head">
-          <h2>Civic Explained in 60 Seconds</h2>
-          <span id="storyTimer" class="badge">Refreshing...</span>
-        </div>
-        <p class="meta">AI-style whiteboard explainers with hourly refreshed scripts.</p>
-        <div class="whiteboard-wrap">
-          <canvas id="whiteboardCanvas" width="760" height="410"></canvas>
-          <article id="storyList" class="issue-card"></article>
-        </div>
-        <audio id="calmAudio" controls loop src="./assets/music/menu/through-sea-cc0.ogg"></audio>
-      </section>
-
-      <section class="panel">
-        <h2>Student priorities vs officials</h2>
-        <div id="comparisonBars" class="issues-grid"></div>
-      </section>
-    </main>
-
-    <main id="detailView" class="focused-view hidden">
-      <section class="panel focused-shell">
-        <div class="split-head">
-          <h2>Issue Detail</h2>
-          <button id="backToDashboardBtn" type="button">← Back</button>
-        </div>
-        <article id="detailCard"></article>
-      </section>
-    </main>
-
-    <main id="gameView" class="focused-view hidden">
-      <section class="panel focused-shell game-panel">
-        <div class="split-head">
-          <h2>Future of Your City</h2>
-          <button id="exitGameBtn" type="button">← Exit</button>
-        </div>
-        <p id="gameRoundLabel" class="meta"></p>
-        <div id="gameStats" class="stats-grid"></div>
-        <article class="detail-evidence">
-          <h3 id="gameScenarioTitle"></h3>
-          <p id="gameScenarioDescription"></p>
-          <p id="gameEvent" class="meta"></p>
-        </article>
-        <label class="stack">Choose your action
-          <select id="gameChoiceSelect"></select>
-        </label>
-        <button id="confirmGameChoiceBtn" type="button">Confirm action</button>
-        <pre id="gameFeedback" class="output">Your choices change the city instantly.</pre>
-        <div id="gameResultCard" class="result-card hidden"></div>
       </section>
     </main>
 

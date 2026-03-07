@@ -1,78 +1,63 @@
-# CivicSpark (Hackathon MVP)
+# CivicSpark (Hackathon Demo)
 
-## 1) Analysis of existing project
+## 1) Current codebase analysis
 
-Before this update, CivicSpark already had:
-- issue discovery and voting,
-- issue detail pages,
-- a playable civic simulation,
-- local persistence,
-- basic comparison and visual polish.
+The project already had:
+- issue discovery + voting
+- a civic simulation game
+- student-vs-official comparison concept
+- modern animated styling
 
-### Weaknesses found
-- too many parallel elements competing for attention,
-- weak first-10-second hook,
-- placeholder civic story section not convincing,
-- limited live public-data feel.
+### Main weaknesses addressed
+- too much scrolling and cognitive load
+- weak immediate hook
+- slow-feeling interaction flow
 
-## 2) Simplified UI structure applied
+## 2) Simplified architecture and UI flow
 
-Homepage flow now:
-1. Hero question/hook
-2. Featured issue card
-3. Main game entry
-4. Civic Explained in 60 Seconds (whiteboard)
-5. Student vs official comparison
-6. Full issue cards below
+The app is now focused on **4 core sections** with button navigation:
 
-## 3) Government issue data integration
+1. Swipe Decisions
+2. Civic Simulation Game
+3. Students vs Officials Live Stats
+4. Real Government Issues Explorer
 
-Added live ingestion from UK Parliament Petitions API (with fallback to existing curated issues):
-- fetches open petitions,
-- classifies into civic categories,
-- generates student-friendly summaries,
-- merges into existing issue feed.
+Navigation is click-based (no long scroll dependency).
 
-## 4) Whiteboard civic explainer system
+## 3) Government issue pipeline
 
-Replaced generic placeholders with a whiteboard animation module:
-- script auto-generated from real/top issues,
-- text written onto canvas progressively,
-- hourly refresh cycle,
-- calm background music track in-section.
+- Keeps base curated issues for reliability.
+- Adds live ingestion from UK Parliament Petitions API.
+- Normalizes incoming data into student-friendly issue cards.
+- Auto-categorizes issues into environment / transport / housing / education.
 
-## 5) Game redesign improvements
+## 4) Swipe Decisions (new main hook)
 
-Kept existing game and upgraded:
-- clearer city metrics,
-- random events,
-- branching decisions,
-- visible stat delta feedback,
-- shareable ending card.
+- Tinder-style decision cards with Yes/No actions.
+- Instant feedback on student support vs official priority.
+- Cards include 10-second relevance context.
+- Updates live stats and issue priorities.
 
-## 6) Student vs government comparison
+## 5) Students vs Officials live stats page
 
-Added clean comparison bars for each issue:
-- student priority intensity,
-- official priority intensity,
-- clear at-a-glance mismatch signal.
+- Shows top student and official priorities.
+- Highlights biggest disagreement.
+- Visual bars update as users vote/swipe.
 
-## 7) Issue card improvements
+## 6) Game improvements
 
-Each card now explicitly answers:
-- what is happening,
-- why it matters to students,
-- what happens if ignored,
-- what actions students want.
+- Keeps 5-year simulation and random events.
+- Clear stat deltas per decision.
+- Multiple endings with shareable final result card.
 
-## 8) Performance and UX guardrails
+## 7) Design polish
 
-- lightweight CSS background animation,
-- canvas explainer animation (no heavy video pipeline required for MVP),
-- hourly refresh cadence,
-- responsive layout maintained.
+- subtle animated gradient background
+- modern cards and transitions
+- cleaner spacing and focused pages
+- fast and mobile-friendly layout
 
-## Run
+## Run locally
 
 ```bash
 python3 -m http.server 4173
