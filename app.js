@@ -120,7 +120,8 @@ const els = {
   gameChoiceSelect: document.querySelector("#gameChoiceSelect"),
   confirmGameChoiceBtn: document.querySelector("#confirmGameChoiceBtn"),
   gameFeedback: document.querySelector("#gameFeedback"),
-  gameResultCard: document.querySelector("#gameResultCard")
+  gameResultCard: document.querySelector("#gameResultCard"),
+  startGameBtn: document.querySelector("#startGameBtn")
 };
 
 function save() {
@@ -408,6 +409,7 @@ function renderGameRound() {
   }
 
   const scenario = GAME_SCENARIOS[state.game.round];
+  console.log("[Game] loading round", state.game.round + 1);
   const event = RANDOM_EVENTS[Math.floor(Math.random() * RANDOM_EVENTS.length)];
   applyEvent(event);
 
@@ -421,6 +423,7 @@ function renderGameRound() {
 }
 
 function startGame() {
+  console.log("[Game] startGame clicked");
   state.game.round = 0;
   state.game.stats = { air: 50, trust: 50, youth: 50, transport: 50, budget: 50, misinformation: 50 };
   state.game.previous = { ...state.game.stats };
@@ -430,18 +433,21 @@ function startGame() {
 }
 
 function handleGameChoice() {
+  console.log("[Game] decision button click detected", { round: state.game.round, selected: els.gameChoiceSelect?.value });
   if (state.game.round >= GAME_SCENARIOS.length) {
     startGame();
     return;
   }
   const scenario = GAME_SCENARIOS[state.game.round];
   const choice = scenario.choices[Number(els.gameChoiceSelect.value || 0)];
+  console.log("[Game] decision recorded", choice.label);
   Object.entries(choice.effects).forEach(([k, v]) => {
     state.game.stats[k] = Math.max(0, Math.min(100, state.game.stats[k] + v));
   });
   els.gameFeedback.textContent = choice.text;
   if (state.user) state.user.points += 3;
   state.game.round += 1;
+  console.log("[Game] game state updated", { round: state.game.round, stats: state.game.stats });
   save();
   renderGameRound();
 }
@@ -477,8 +483,12 @@ function attachEvents() {
     renderIssuesPage();
   });
 
-  els.startGameBtn.addEventListener("click", startGame);
-  els.confirmGameChoiceBtn.addEventListener("click", handleGameChoice);
+  if (els.startGameBtn) {
+    els.startGameBtn.addEventListener("click", startGame);
+  }
+  if (els.confirmGameChoiceBtn) {
+    els.confirmGameChoiceBtn.addEventListener("click", handleGameChoice);
+  }
 }
 
 function renderAll() {
