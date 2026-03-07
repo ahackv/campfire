@@ -15,7 +15,7 @@
       <div id="profilePill" class="profile-pill hidden"></div>
     </header>
 
-    <main class="layout">
+    <main id="homeView" class="layout">
       <section class="panel" id="authPanel">
         <h2>Get Started</h2>
         <p>Create a student profile (demo only) to join local issue discussions.</p>
@@ -50,13 +50,8 @@
           <h2>Local issues feed</h2>
           <span id="issueCount" class="badge"></span>
         </div>
+        <p class="muted">Open a card to view full discussion in a dedicated screen.</p>
         <div id="issuesList" class="issues-grid"></div>
-      </section>
-
-      <section class="panel" id="discussionPanel">
-        <h2>Discussion + voting</h2>
-        <p class="muted">Select an issue card to view comments, cast a vote, and collaborate on solutions.</p>
-        <div id="activeIssue"></div>
       </section>
 
       <section class="panel" id="submitPanel">
@@ -76,6 +71,17 @@
           <button id="petitionBtn">Generate petition summary</button>
           <pre id="actionOutput" class="output">Action outputs will appear here...</pre>
         </div>
+      </section>
+    </main>
+
+    <main id="discussionView" class="discussion-view hidden">
+      <section class="panel discussion-shell">
+        <div class="split-head">
+          <h2>Discussion + voting</h2>
+          <button id="backToHomeBtn" type="button">← Back to feed</button>
+        </div>
+        <p class="muted">Vote, comment, and build solutions with other students.</p>
+        <div id="activeIssue"></div>
       </section>
     </main>
 

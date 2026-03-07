@@ -19,6 +19,7 @@ body {
   backdrop-filter: blur(8px);
   position: sticky;
   top: 0;
+  z-index: 10;
 }
 h1 { margin: 0; }
 .topbar p { margin: 0.3rem 0 0; color: #cbd5e1; }
@@ -58,7 +59,7 @@ button:hover { filter: brightness(1.08); }
   border-radius: 999px;
   padding: 0.5rem 0.8rem;
 }
-.hidden { display: none; }
+.hidden { display: none !important; }
 .muted { color: #94a3b8; }
 .badge {
   padding: 0.2rem 0.6rem;
@@ -66,7 +67,7 @@ button:hover { filter: brightness(1.08); }
   background: rgba(14, 165, 233, 0.2);
   color: #67e8f9;
 }
-.split-head { display: flex; justify-content: space-between; align-items: center; }
+.split-head { display: flex; justify-content: space-between; align-items: center; gap: 0.8rem; }
 .issues-grid { display: grid; gap: 0.7rem; margin-top: 0.7rem; }
 .issue-card {
   border: 1px solid #334155;
@@ -85,4 +86,12 @@ button:hover { filter: brightness(1.08); }
   border-radius: 8px;
   padding: 0.7rem;
   min-height: 130px;
+}
+.discussion-view {
+  padding: 1rem;
+  max-width: 980px;
+  margin: 0 auto;
+}
+.discussion-shell {
+  min-height: calc(100vh - 130px);
 }

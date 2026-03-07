@@ -33,6 +33,9 @@ const els = {
   nameInput: document.querySelector("#nameInput"),
   levelInput: document.querySelector("#levelInput"),
   profilePill: document.querySelector("#profilePill"),
+  homeView: document.querySelector("#homeView"),
+  discussionView: document.querySelector("#discussionView"),
+  backToHomeBtn: document.querySelector("#backToHomeBtn"),
   issuesList: document.querySelector("#issuesList"),
   issueCount: document.querySelector("#issueCount"),
   activeIssue: document.querySelector("#activeIssue"),
@@ -90,6 +93,16 @@ function renderIssues() {
     `;
     els.issuesList.append(card);
   });
+}
+
+function showHomeView() {
+  els.homeView.classList.remove("hidden");
+  els.discussionView.classList.add("hidden");
+}
+
+function showDiscussionView() {
+  els.homeView.classList.add("hidden");
+  els.discussionView.classList.remove("hidden");
 }
 
 function renderActiveIssue() {
@@ -157,6 +170,11 @@ function attachGlobalEvents() {
     if (!issueId) return;
     state.selectedIssueId = issueId;
     renderActiveIssue();
+    showDiscussionView();
+  });
+
+  els.backToHomeBtn.addEventListener("click", () => {
+    showHomeView();
   });
 
   els.issueForm.addEventListener("submit", (event) => {
@@ -176,6 +194,7 @@ function attachGlobalEvents() {
     save();
     els.issueForm.reset();
     renderAll();
+    showDiscussionView();
   });
 
   els.emailBtn.addEventListener("click", () => {
@@ -201,4 +220,5 @@ function renderAll() {
 
 load();
 attachGlobalEvents();
+showHomeView();
 renderAll();
