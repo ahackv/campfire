@@ -1,113 +1,56 @@
-# Campus Voice (Data-Driven Hackathon MVP)
+# Campus Voice (Ultra Hackathon MVP)
 
-## 1) Improved concept
+## Product summary
 
-Campus Voice is a **student civic intelligence dashboard** that turns official UK public issues into clear issue cards students can understand, vote on, and discuss.
+Campus Voice is a **student civic intelligence ecosystem** that combines:
+- real-style UK public issue exploration,
+- youth voting and evidence views,
+- AI-style explainers,
+- meme/joke engagement loops,
+- an interactive issue map,
+- and a replayable **Fix Your City** strategy simulation.
 
-Instead of only posting opinions, students explore evidence-backed public issues (transport, environment, education, housing), prioritise them, and generate a **Youth Mandate Brief** for decision-makers.
+## Why this version is stronger
 
-## 2) Why this is stronger than the old version
+Compared with a basic issue-posting site, this version adds:
+- entertainment hooks (hourly memes + fun voting),
+- gamification and civic ranks,
+- dynamic simulation with random events and multiple endings,
+- visual dashboards and student-vs-official priority gaps,
+- decision-ready output via a one-click Youth Mandate Brief.
 
-Old version:
-- mostly manual issue posting
-- useful mainly for already-engaged users
-- weaker evidence context
+## MVP feature set implemented
 
-New version:
-- real-style public issue feed
-- source/evidence context + credibility score
-- student priority voting and trend charts
-- student vs official priority gap views
-- one-click policy brief to make youth voice actionable
+1. **Real-Issue Explorer**
+   - UK-style government/council issues with source, category, chamber, credibility, and votes.
+2. **Issue Detail + Misinformation Trust Meter**
+   - evidence list, actions, discussion highlights, trust bar, and priority voting.
+3. **Political Meme & Joke Hub**
+   - 3 refreshed memes (hourly timer) and “vote funniest” interaction.
+4. **Youth Dashboard**
+   - scorecards + charts for top concerns and student-vs-official priority gap.
+5. **Interactive Issue Map**
+   - area hotspots that open top local issue quickly.
+6. **Fix Your City Game**
+   - 5 rounds, random events, multi-metric management, and multiple endings.
+7. **Gamification**
+   - civic XP and ranks: Observer → Voter → Community Voice → Policy Influencer → Youth Leader.
+8. **Youth Mandate Brief**
+   - generates judge/adult-friendly recommendation summary.
 
-## 3) How the Grokathon inspiration is adapted
+## Key sample issue included
 
-Inspired by data-driven civic accountability tools, this MVP adapts the concept for youth voice:
-- not politician fact-checking,
-- but **student-facing issue translation + priority intelligence**.
+- Cambridge River Cam boat emissions and air quality issue with evidence and actions.
 
-It focuses on:
-- trusted public-data style inputs,
-- youth-readable summaries,
-- measurable participation,
-- outputs adults can act on.
+## Suggested next upgrade (post-hackathon)
 
-## 4) MVP scope
-
-- Landing + mission
-- Real-Issue Explorer (sample UK-style public data)
-- Area/category/sort filters
-- Issue detail with source, evidence, actions, comments
-- Priority voting (high/medium/low)
-- Dashboard scorecards and charts
-- Youth Mandate Brief output
-- Cambridge River Cam pollution demo issue
-
-## 5) Architecture and stack
-
-### Current hackathon implementation
-- HTML + CSS + Vanilla JS
-- LocalStorage persistence
-- Canvas chart rendering
-
-### Recommended upgrade path
 - Next.js + TypeScript + Tailwind
-- Supabase (auth + Postgres + row-level security)
-- API routes for ingesting/normalising public datasets
-- Chart library (e.g. Recharts)
+- Supabase/Firebase auth + DB
+- API route layer for data.gov.uk / council feeds
+- LLM integration for richer explainers and misinformation classification
+- map library (Leaflet/Mapbox)
 
-## 6) UK public data source model (for integration)
-
-Potential sources:
-- data.gov.uk datasets
-- UK Parliament committees/petitions feeds
-- council consultations and committee agendas
-- local air quality, transport, planning, housing datasets
-- ONS/official statistics where relevant
-
-Suggested ingestion model:
-1. Fetch raw source data.
-2. Normalize into common issue schema.
-3. Add summary, category, confidence/credibility metadata.
-4. Expose to frontend as unified issue feed.
-
-## 7) Logical database schema
-
-- `users(id, name, education_level, created_at)`
-- `issues(id, title, location, category, chamber, source, credibility_score, official_priority, why_it_matters, created_at)`
-- `issue_evidence(id, issue_id, evidence_text)`
-- `issue_actions(id, issue_id, action_text)`
-- `votes(id, issue_id, user_id, priority_level, created_at)`
-- `comments(id, issue_id, user_id, body, created_at)`
-- `brief_runs(id, user_id, content, created_at)`
-
-## 8) Main pages and user flow
-
-1. Home dashboard: mission, filters, issue cards, scorecards/charts.
-2. Issue detail: evidence, source, actions, youth discussion, vote.
-3. Return to dashboard and see updated charts/stats.
-4. Generate Youth Mandate Brief.
-
-## 9) Stats and charts
-
-- Total student votes
-- Most voted issue this week
-- Credibility average
-- "You are not alone" metric
-- Chart 1: student high-priority votes by issue
-- Chart 2: student-vs-official priority gap by issue
-
-## 10) File structure
-
-```text
-.
-├── index.html
-├── styles.css
-├── app.js
-└── README.md
-```
-
-## Run locally
+## Run
 
 ```bash
 python3 -m http.server 4173

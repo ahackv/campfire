@@ -3,25 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Campus Voice Data MVP</title>
+    <title>Campus Voice Ultra MVP</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <header class="topbar">
       <div>
-        <h1>📊 Campus Voice</h1>
-        <p>Real public issues, translated for students.</p>
+        <h1>⚡ Campus Voice</h1>
+        <p>Democracy should be playable.</p>
       </div>
       <div id="profilePill" class="profile-pill hidden"></div>
     </header>
 
-    <main id="homeView" class="layout">
+    <main id="dashboardView" class="layout">
       <section class="panel hero">
-        <h2>Student Civic Intelligence Platform</h2>
-        <p>
-          We turn official UK public issues into youth-friendly issue cards, evidence snapshots,
-          and voting dashboards so students can prioritise what matters.
-        </p>
+        <h2>Student Civic Intelligence + Strategy Game</h2>
+        <p>Real-style UK public issues, youth voting, AI explainers, memes, map, and a replayable “Fix Your City” simulation.</p>
         <form id="authForm" class="inline-form">
           <input id="nameInput" required placeholder="Your name" />
           <select id="levelInput">
@@ -44,36 +41,53 @@
           <select id="sortFilter">
             <option value="trending">Sort: Trending</option>
             <option value="support">Sort: Most supported</option>
-            <option value="official">Sort: Biggest official gap</option>
+            <option value="official">Sort: Student vs official gap</option>
           </select>
         </div>
         <div id="issuesList" class="issues-grid"></div>
       </section>
 
       <section class="panel">
-        <h2>Stats Dashboard</h2>
-        <div class="scorecards" id="scorecards"></div>
-        <div class="chart-grid">
-          <article>
-            <h3>Top priorities (student votes)</h3>
-            <canvas id="priorityChart" width="420" height="220"></canvas>
-          </article>
-          <article>
-            <h3>Student vs official priority</h3>
-            <canvas id="gapChart" width="420" height="220"></canvas>
-          </article>
+        <div class="split-head">
+          <h2>Politics Meme + Joke Hub</h2>
+          <span id="memeTimer" class="badge">Refreshing...</span>
         </div>
+        <div id="memesList" class="issues-grid"></div>
       </section>
 
       <section class="panel">
-        <h2>Why this matters</h2>
-        <ul>
-          <li>Local decisions shape buses, air quality, libraries, and safety.</li>
-          <li>Evidence-backed participation is stronger than isolated complaints.</li>
-          <li>Misinformation can push attention away from real solutions.</li>
-        </ul>
-        <button id="briefBtn" type="button">Generate Youth Mandate Brief</button>
+        <div class="split-head">
+          <h2>Youth Priority Dashboard</h2>
+          <button id="briefBtn" type="button">Generate Youth Mandate Brief</button>
+        </div>
+        <div id="scorecards" class="scorecards"></div>
+        <div class="chart-grid">
+          <article>
+            <h3>Most voted concerns</h3>
+            <canvas id="priorityChart" width="420" height="220"></canvas>
+          </article>
+          <article>
+            <h3>Student vs official priority gap</h3>
+            <canvas id="gapChart" width="420" height="220"></canvas>
+          </article>
+        </div>
         <pre id="briefOutput" class="output">Brief output appears here.</pre>
+      </section>
+
+      <section class="panel">
+        <div class="split-head">
+          <h2>Interactive Issue Map</h2>
+          <span class="meta">Tap a hotspot</span>
+        </div>
+        <div id="mapHotspots" class="map-grid"></div>
+      </section>
+
+      <section class="panel">
+        <div class="split-head">
+          <h2>Fix Your City (Game)</h2>
+          <button id="startGameBtn" type="button">Play</button>
+        </div>
+        <p class="meta">5 in-game years • dynamic random events • multiple endings.</p>
       </section>
     </main>
 
@@ -81,9 +95,30 @@
       <section class="panel focused-shell">
         <div class="split-head">
           <h2>Issue Detail</h2>
-          <button id="backBtn" type="button">← Back to dashboard</button>
+          <button id="backToDashboardBtn" type="button">← Back</button>
         </div>
         <article id="detailCard"></article>
+      </section>
+    </main>
+
+    <main id="gameView" class="focused-view hidden">
+      <section class="panel focused-shell">
+        <div class="split-head">
+          <h2>Fix Your City</h2>
+          <button id="exitGameBtn" type="button">← Exit</button>
+        </div>
+        <p id="gameRoundLabel" class="meta"></p>
+        <div id="gameStats" class="scorecards"></div>
+        <article class="detail-evidence">
+          <h3 id="gameScenarioTitle"></h3>
+          <p id="gameScenarioDescription"></p>
+          <p id="gameEvent" class="meta"></p>
+        </article>
+        <label class="stack">Choose your action
+          <select id="gameChoiceSelect"></select>
+        </label>
+        <button id="confirmGameChoiceBtn" type="button">Confirm action</button>
+        <pre id="gameFeedback" class="output">Your decisions change the city every round.</pre>
       </section>
     </main>
 
