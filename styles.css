@@ -1,0 +1,88 @@
+:root {
+  font-family: Inter, system-ui, sans-serif;
+  color: #f3f6ff;
+  background: #0b1220;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: radial-gradient(circle at 10% 10%, #1e3a8a, #0f172a 50%, #020617);
+  min-height: 100vh;
+}
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid #334155;
+  background: rgba(2, 6, 23, 0.7);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+}
+h1 { margin: 0; }
+.topbar p { margin: 0.3rem 0 0; color: #cbd5e1; }
+.layout {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  padding: 1rem;
+}
+.panel {
+  border: 1px solid #334155;
+  background: rgba(15, 23, 42, 0.85);
+  border-radius: 14px;
+  padding: 1rem;
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.35);
+}
+.stack { display: grid; gap: 0.7rem; }
+label { display: grid; gap: 0.35rem; font-size: 0.95rem; }
+input, select, textarea, button {
+  border-radius: 10px;
+  border: 1px solid #475569;
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 0.65rem;
+  font: inherit;
+}
+button {
+  cursor: pointer;
+  background: linear-gradient(120deg, #0ea5e9, #7c3aed);
+  border: none;
+  font-weight: 700;
+}
+button:hover { filter: brightness(1.08); }
+.profile-pill {
+  border: 1px solid #1d4ed8;
+  background: rgba(59, 130, 246, 0.15);
+  border-radius: 999px;
+  padding: 0.5rem 0.8rem;
+}
+.hidden { display: none; }
+.muted { color: #94a3b8; }
+.badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(14, 165, 233, 0.2);
+  color: #67e8f9;
+}
+.split-head { display: flex; justify-content: space-between; align-items: center; }
+.issues-grid { display: grid; gap: 0.7rem; margin-top: 0.7rem; }
+.issue-card {
+  border: 1px solid #334155;
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: rgba(30, 41, 59, 0.7);
+}
+.issue-card h3 { margin: 0 0 0.35rem; font-size: 1rem; }
+.issue-meta { color: #93c5fd; font-size: 0.85rem; }
+.comment-list { display: grid; gap: 0.45rem; margin: 0.8rem 0; }
+.comment { padding: 0.5rem; border-radius: 8px; background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; }
+.output {
+  white-space: pre-wrap;
+  background: rgba(2, 6, 23, 0.6);
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 0.7rem;
+  min-height: 130px;
+}
