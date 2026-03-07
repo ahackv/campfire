@@ -10,42 +10,16 @@
     <header class="topbar">
       <div>
         <h1>🗳️ Campus Voice</h1>
-        <p>Youth-powered civic action for schools, colleges, and universities.</p>
+        <p>Make student voice count in real government debates.</p>
       </div>
       <div id="profilePill" class="profile-pill hidden"></div>
     </header>
 
     <main id="homeView" class="layout">
-      <section class="panel" id="comparisonPanel">
-        <h2>Why this upgrade matters</h2>
-        <div class="compare-grid">
-          <article>
-            <h3>Old (passive website)</h3>
-            <ul>
-              <li>Good for already-engaged students.</li>
-              <li>Lets users post and discuss issues.</li>
-              <li>Harder to show direct cause-and-effect.</li>
-            </ul>
-          </article>
-          <article>
-            <h3>New (interactive game)</h3>
-            <ul>
-              <li>Makes democracy personal and visual.</li>
-              <li>Shows consequences of action vs inaction.</li>
-              <li>Teaches misinformation risks through play.</li>
-            </ul>
-          </article>
-        </div>
-      </section>
-
       <section class="panel" id="authPanel">
-        <h2>Get Started</h2>
-        <p>Create a student profile (demo only) to join local issue discussions.</p>
+        <h2>Join in seconds</h2>
         <form id="authForm" class="stack">
-          <label>
-            Name
-            <input id="nameInput" required placeholder="e.g. Maya Singh" />
-          </label>
+          <label>Name <input id="nameInput" required placeholder="e.g. Maya Singh" /></label>
           <label>
             Education level
             <select id="levelInput">
@@ -58,60 +32,56 @@
         </form>
       </section>
 
-      <section class="panel" id="gameIntroPanel">
-        <h2>🎮 Your Town, Your Choices</h2>
-        <p>
-          A short scenario game where civic choices affect visible town stats:
-          Youth Voice, Public Trust, Community Wellbeing, Environment, and Misinformation Risk.
-        </p>
-        <button id="startGameBtn" type="button">Start interactive game</button>
-      </section>
-
-      <section class="panel" id="learnPanel">
-        <h2>Why democracy matters</h2>
-        <ul>
-          <li>Your vote shapes local decisions like transport, housing, and clean air rules.</li>
-          <li>Community feedback pushes councils to investigate ignored problems.</li>
-          <li>Learning civic basics early protects against misinformation.</li>
-        </ul>
-      </section>
-
       <section class="panel" id="issuesPanel">
         <div class="split-head">
-          <h2>Local issues feed</h2>
+          <h2>Government debates now</h2>
           <span id="issueCount" class="badge"></span>
         </div>
-        <p class="muted">Open a card to view full discussion in a dedicated screen.</p>
+        <p class="muted">These are live policy topics councils/parliament are actively debating.</p>
         <div id="issuesList" class="issues-grid"></div>
       </section>
 
+      <section class="panel" id="gameIntroPanel">
+        <h2>🎮 Your Town, Your Choices</h2>
+        <p class="muted">A 4-round simulation showing how civic choices change real outcomes.</p>
+        <button id="startGameBtn" type="button">Play civic simulation</button>
+      </section>
+
+      <section class="panel" id="insightPanel">
+        <div class="split-head">
+          <h2>Policy insight dashboard</h2>
+          <button id="briefBtn" type="button">Generate Youth Mandate Brief</button>
+        </div>
+        <div class="chart-grid">
+          <article>
+            <h3>Support by issue</h3>
+            <canvas id="supportChart" width="420" height="220"></canvas>
+          </article>
+          <article>
+            <h3>Youth participation trend</h3>
+            <canvas id="trendChart" width="420" height="220"></canvas>
+          </article>
+        </div>
+        <pre id="actionOutput" class="output">Your one-page youth mandate brief appears here.</pre>
+      </section>
+
       <section class="panel" id="submitPanel">
-        <h2>Report a concern</h2>
+        <h2>Submit issue for next debate cycle</h2>
         <form id="issueForm" class="stack">
           <label>Issue title <input id="issueTitle" required /></label>
           <label>Location <input id="issueLocation" required /></label>
           <label>Why this matters <textarea id="issueWhy" rows="3" required></textarea></label>
-          <button type="submit">Post issue</button>
+          <button type="submit">Submit for review</button>
         </form>
-      </section>
-
-      <section class="panel" id="actionPanel">
-        <h2>Turn voices into action</h2>
-        <div class="stack">
-          <button id="emailBtn">Generate council email draft</button>
-          <button id="petitionBtn">Generate petition summary</button>
-          <pre id="actionOutput" class="output">Action outputs will appear here...</pre>
-        </div>
       </section>
     </main>
 
     <main id="discussionView" class="focused-view hidden">
       <section class="panel focused-shell">
         <div class="split-head">
-          <h2>Discussion + voting</h2>
-          <button id="backToHomeBtn" type="button">← Back to feed</button>
+          <h2>Debate room</h2>
+          <button id="backToHomeBtn" type="button">← Back</button>
         </div>
-        <p class="muted">Vote, comment, and build solutions with other students.</p>
         <div id="activeIssue"></div>
       </section>
     </main>
@@ -120,7 +90,7 @@
       <section class="panel focused-shell">
         <div class="split-head">
           <h2>Your Town, Your Choices</h2>
-          <button id="exitGameBtn" type="button">← Exit game</button>
+          <button id="exitGameBtn" type="button">← Exit</button>
         </div>
         <p class="muted" id="roundLabel"></p>
         <div id="statsPanel" class="stats-grid"></div>
@@ -128,8 +98,11 @@
           <h3 id="scenarioTitle"></h3>
           <p id="scenarioDescription"></p>
         </article>
-        <div id="choicesList" class="choices-grid"></div>
-        <pre id="gameFeedback" class="output">Make a choice to see what changes.</pre>
+        <label class="stack">Choose your action
+          <select id="choiceSelect"></select>
+        </label>
+        <button id="confirmChoiceBtn" type="button">Confirm choice</button>
+        <pre id="gameFeedback" class="output">Make a choice to see consequences.</pre>
       </section>
     </main>
 

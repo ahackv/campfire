@@ -1,93 +1,108 @@
 const STORAGE_KEY = "campus-voice-mvp";
 
-const initialScenarios = [
+const debatedIssues = [
   {
-    title: "River Cam boat smoke pollution",
-    description:
-      "In Cambridge, smoke from boats near the River Cam makes nearby air smell like gas. A student email complaint was ignored.",
-    choices: [
-      {
-        label: "Ignore it and move on",
-        effects: { youthVoice: -10, trust: -8, wellbeing: -6, environment: -8, misinformation: 4 },
-        explanation: "Inaction keeps pollution unchanged and lowers belief that youth voices matter."
-      },
-      {
-        label: "Post an angry complaint online only",
-        effects: { youthVoice: 2, trust: -2, wellbeing: -2, environment: -1, misinformation: 8 },
-        explanation: "The issue gets attention, but without evidence it is easy to dismiss and confusion grows."
-      },
-      {
-        label: "Gather student evidence and photos",
-        effects: { youthVoice: 10, trust: 8, wellbeing: 4, environment: 6, misinformation: -6 },
-        explanation: "Evidence creates credibility and helps officials take the report seriously."
-      },
-      {
-        label: "Start a petition and contact council with proof",
-        effects: { youthVoice: 12, trust: 10, wellbeing: 6, environment: 8, misinformation: -5 },
-        explanation: "Collective action with proof increases pressure and chance of real policy response."
-      }
-    ]
+    id: crypto.randomUUID(),
+    title: "River Cam boat emissions regulation",
+    chamber: "Cambridge City Council Environment Committee",
+    location: "Cambridge, River Cam",
+    why: "Boat smoke is affecting air quality and residents report gas-like smell up to about a mile away.",
+    votes: { support: 18, oppose: 3, amend: 7 },
+    comments: [
+      "Add emission checks for tourist boats.",
+      "Students can gather air-quality logs near colleges."
+    ],
+    status: "Debate this month"
   },
   {
-    title: "Bus fares increase for students",
-    description: "Bus fares rise and students struggle to reach classes, activities, and part-time jobs.",
+    id: crypto.randomUUID(),
+    title: "National debate: reduced bus fares for under-21s",
+    chamber: "UK Parliament Transport Committee",
+    location: "England",
+    why: "Rising fares reduce attendance and access to opportunities for students.",
+    votes: { support: 16, oppose: 4, amend: 6 },
+    comments: ["Need a means-tested cap.", "Pilot in university towns first."],
+    status: "Evidence gathering stage"
+  },
+  {
+    id: crypto.randomUUID(),
+    title: "Youth access to extended library hours",
+    chamber: "County Education & Skills Board",
+    location: "Cambridgeshire",
+    why: "Exam-season pressure is high and many students lack quiet study spaces at home.",
+    votes: { support: 12, oppose: 2, amend: 8 },
+    comments: ["Trial 2 evenings a week.", "Coordinate volunteers for safe late exit."],
+    status: "Public consultation open"
+  }
+];
+
+const gameScenarios = [
+  {
+    title: "River Cam pollution",
+    description: "A complaint was ignored. What do students do next?",
     choices: [
       {
         label: "Do nothing",
-        effects: { youthVoice: -7, trust: -6, wellbeing: -8, environment: -2, misinformation: 2 },
-        explanation: "Travel barriers remain and fewer students feel represented."
+        effects: { youthVoice: -8, trust: -7, wellbeing: -6, environment: -7, misinformation: 3 },
+        explanation: "Inaction keeps pollution and frustration high."
       },
       {
-        label: "Spread a rumour that all buses are being cancelled",
-        effects: { youthVoice: -4, trust: -12, wellbeing: -4, environment: -1, misinformation: 14 },
-        explanation: "False claims create panic and damage trust in civic solutions."
+        label: "Gather evidence + photos with students",
+        effects: { youthVoice: 10, trust: 8, wellbeing: 4, environment: 7, misinformation: -5 },
+        explanation: "Evidence increases credibility and policy traction."
       },
       {
-        label: "Run a student poll and submit fare impact data",
-        effects: { youthVoice: 9, trust: 8, wellbeing: 7, environment: 3, misinformation: -4 },
-        explanation: "Data-backed feedback helps leaders evaluate fairer pricing options."
+        label: "Spread an unverified rumour",
+        effects: { youthVoice: -2, trust: -11, wellbeing: -3, environment: -2, misinformation: 13 },
+        explanation: "False claims damage trust and derail progress."
       }
     ]
   },
   {
-    title: "Local park is neglected",
-    description: "A local park feels unsafe and run-down, so fewer young people use it.",
+    title: "Bus fares debate",
+    description: "Students are struggling to travel to classes.",
     choices: [
       {
-        label: "Complain privately but do not organize",
-        effects: { youthVoice: 1, trust: -3, wellbeing: -3, environment: -4, misinformation: 2 },
-        explanation: "Frustration is visible, but impact is limited without coordinated action."
+        label: "Run a youth poll and submit impact data",
+        effects: { youthVoice: 9, trust: 7, wellbeing: 8, environment: 3, misinformation: -4 },
+        explanation: "Data-backed participation strengthens the case."
       },
       {
-        label: "Organize a youth clean-up day and request council support",
-        effects: { youthVoice: 10, trust: 7, wellbeing: 9, environment: 8, misinformation: -3 },
-        explanation: "Shared effort shows leadership and builds momentum for maintenance funding."
-      },
-      {
-        label: "Blame a random group without evidence",
-        effects: { youthVoice: -3, trust: -10, wellbeing: -6, environment: -2, misinformation: 12 },
-        explanation: "Scapegoating divides the community and distracts from practical fixes."
+        label: "Only post angry comments online",
+        effects: { youthVoice: 1, trust: -3, wellbeing: -2, environment: 0, misinformation: 6 },
+        explanation: "Awareness grows, but decision-makers need evidence."
       }
     ]
   },
   {
-    title: "Students want longer library hours",
-    description: "Exam season is near and students ask for later opening times in the local library.",
+    title: "Local safety budget",
+    description: "Council is reallocating funds that affect student safety routes.",
     choices: [
       {
-        label: "Assume adults will never listen",
-        effects: { youthVoice: -8, trust: -7, wellbeing: -5, environment: 0, misinformation: 3 },
-        explanation: "Giving up early reinforces the feeling that youth participation is pointless."
+        label: "Attend hearing with a student coalition",
+        effects: { youthVoice: 10, trust: 9, wellbeing: 7, environment: 0, misinformation: -3 },
+        explanation: "Collective engagement increases influence with adults in power."
       },
       {
-        label: "Meet librarians, gather signatures, and propose a trial",
-        effects: { youthVoice: 11, trust: 9, wellbeing: 10, environment: 0, misinformation: -2 },
-        explanation: "Constructive proposals and measurable trials are easier for institutions to approve."
+        label: "Leave it to others",
+        effects: { youthVoice: -7, trust: -6, wellbeing: -5, environment: 0, misinformation: 2 },
+        explanation: "Not participating still has consequences."
+      }
+    ]
+  },
+  {
+    title: "Library hours decision",
+    description: "A final vote is coming on extended study hours.",
+    choices: [
+      {
+        label: "Submit compromise plan + petition",
+        effects: { youthVoice: 11, trust: 8, wellbeing: 10, environment: 0, misinformation: -2 },
+        explanation: "Constructive solutions are easier to adopt quickly."
       },
       {
-        label: "Post misleading claims about library staff",
-        effects: { youthVoice: -2, trust: -11, wellbeing: -5, environment: 0, misinformation: 13 },
-        explanation: "Misinformation harms cooperation and slows useful policy changes."
+        label: "Call the process fake without proof",
+        effects: { youthVoice: -3, trust: -10, wellbeing: -4, environment: 0, misinformation: 10 },
+        explanation: "Distrust without facts weakens real advocacy."
       }
     ]
   }
@@ -96,42 +111,13 @@ const initialScenarios = [
 const state = {
   user: null,
   selectedIssueId: null,
-  issues: [
-    {
-      id: crypto.randomUUID(),
-      title: "River Cam boat smoke pollution",
-      location: "Cambridge, River Cam",
-      why: "Boats release smoke and gas smells. Nearby residents cannot open windows, and students feel ignored after reporting it.",
-      votes: { urgent: 12, monitor: 2 },
-      comments: [
-        "I cycle by the river daily and the smell is real near evening.",
-        "Could schools and colleges co-sign one evidence-based complaint?"
-      ],
-      createdBy: "Demo student"
-    },
-    {
-      id: crypto.randomUUID(),
-      title: "Safer bike parking near sixth form",
-      location: "Cambridge city centre",
-      why: "Stolen bikes reduce attendance and independence for students commuting on low budgets.",
-      votes: { urgent: 7, monitor: 4 },
-      comments: ["Need CCTV and shelter.", "Let's map theft hotspots."],
-      createdBy: "Aron"
-    }
-  ],
+  issues: debatedIssues,
   game: {
-    playing: false,
     round: 0,
-    scenarios: initialScenarios,
-    stats: {
-      youthVoice: 50,
-      trust: 50,
-      wellbeing: 50,
-      environment: 50,
-      misinformation: 50
-    },
-    history: []
-  }
+    stats: { youthVoice: 50, trust: 50, wellbeing: 50, environment: 50, misinformation: 50 },
+    choiceIndex: 0
+  },
+  participationTrend: [22, 31, 44, 58, 67]
 };
 
 const els = {
@@ -152,14 +138,16 @@ const els = {
   issueTitle: document.querySelector("#issueTitle"),
   issueLocation: document.querySelector("#issueLocation"),
   issueWhy: document.querySelector("#issueWhy"),
-  emailBtn: document.querySelector("#emailBtn"),
-  petitionBtn: document.querySelector("#petitionBtn"),
+  briefBtn: document.querySelector("#briefBtn"),
   actionOutput: document.querySelector("#actionOutput"),
+  supportChart: document.querySelector("#supportChart"),
+  trendChart: document.querySelector("#trendChart"),
   roundLabel: document.querySelector("#roundLabel"),
   statsPanel: document.querySelector("#statsPanel"),
   scenarioTitle: document.querySelector("#scenarioTitle"),
   scenarioDescription: document.querySelector("#scenarioDescription"),
-  choicesList: document.querySelector("#choicesList"),
+  choiceSelect: document.querySelector("#choiceSelect"),
+  confirmChoiceBtn: document.querySelector("#confirmChoiceBtn"),
   gameFeedback: document.querySelector("#gameFeedback")
 };
 
@@ -179,13 +167,13 @@ function addPoints(points) {
   if (!state.user) return;
   state.user.points += points;
   state.user.streak = Math.max(1, state.user.streak + 1);
-  if (state.user.points >= 30 && !state.user.badges.includes("Community Spark")) {
-    state.user.badges.push("Community Spark");
+  if (state.user.points >= 40 && !state.user.badges.includes("Policy Co-Author")) {
+    state.user.badges.push("Policy Co-Author");
   }
 }
 
 function clampStat(value) {
-  return Math.min(100, Math.max(0, value));
+  return Math.max(0, Math.min(100, value));
 }
 
 function renderProfile() {
@@ -194,24 +182,55 @@ function renderProfile() {
     return;
   }
   els.profilePill.classList.remove("hidden");
-  els.profilePill.textContent = `${state.user.name} • ${state.user.level} • ⭐ ${state.user.points} pts • 🔥 ${state.user.streak} streak • 🏅 ${state.user.badges.join(", ") || "No badges yet"}`;
+  els.profilePill.textContent = `${state.user.name} • ${state.user.level} • ⭐ ${state.user.points} • 🔥 ${state.user.streak} • 🏅 ${state.user.badges.join(", ") || "No badge yet"}`;
 }
 
 function renderIssues() {
-  els.issueCount.textContent = `${state.issues.length} issue(s)`;
+  els.issueCount.textContent = `${state.issues.length} debates`;
   els.issuesList.innerHTML = "";
   state.issues.forEach((issue) => {
     const card = document.createElement("article");
     card.className = "issue-card";
     card.innerHTML = `
       <h3>${issue.title}</h3>
-      <p class="issue-meta">📍 ${issue.location} • by ${issue.createdBy}</p>
+      <p class="issue-meta">${issue.chamber} • ${issue.status}</p>
+      <p class="issue-meta">📍 ${issue.location}</p>
       <p>${issue.why}</p>
-      <p class="issue-meta">Votes: 🚨 ${issue.votes.urgent} | 👀 ${issue.votes.monitor}</p>
-      <button data-open="${issue.id}">Open discussion</button>
+      <p class="issue-meta">Poll: ✅ ${issue.votes.support} | ❌ ${issue.votes.oppose} | ✏️ ${issue.votes.amend}</p>
+      <button data-open="${issue.id}">Open debate room</button>
     `;
     els.issuesList.append(card);
   });
+}
+
+function drawBarChart(canvas, labels, values, color) {
+  const ctx = canvas.getContext("2d");
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = "#0b1220";
+  ctx.fillRect(0, 0, w, h);
+
+  const max = Math.max(...values, 1);
+  const barW = Math.floor((w - 40) / values.length) - 16;
+  values.forEach((value, i) => {
+    const x = 30 + i * (barW + 16);
+    const barH = Math.floor(((h - 60) * value) / max);
+    const y = h - 30 - barH;
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, barW, barH);
+    ctx.fillStyle = "#dbeafe";
+    ctx.font = "12px sans-serif";
+    ctx.fillText(String(value), x + 4, y - 6);
+    ctx.fillText(labels[i], x, h - 12);
+  });
+}
+
+function renderCharts() {
+  const supportValues = state.issues.map((i) => i.votes.support);
+  const supportLabels = state.issues.map((_, i) => `D${i + 1}`);
+  drawBarChart(els.supportChart, supportLabels, supportValues, "#38bdf8");
+  drawBarChart(els.trendChart, ["W1", "W2", "W3", "W4", "W5"], state.participationTrend, "#a78bfa");
 }
 
 function showHomeView() {
@@ -236,42 +255,48 @@ function renderActiveIssue() {
   const issue = state.issues.find((i) => i.id === state.selectedIssueId) || state.issues[0];
   if (!issue) return;
   state.selectedIssueId = issue.id;
-
   const comments = issue.comments.map((comment) => `<div class="comment">💬 ${comment}</div>`).join("");
+
   els.activeIssue.innerHTML = `
     <h3>${issue.title}</h3>
-    <p class="issue-meta">${issue.location}</p>
+    <p class="issue-meta">${issue.chamber} • ${issue.status}</p>
     <p>${issue.why}</p>
-    <div class="stack" style="grid-template-columns:1fr 1fr; display:grid; margin: .6rem 0;">
-      <button data-vote="urgent">Vote urgent (🚨 ${issue.votes.urgent})</button>
-      <button data-vote="monitor">Vote monitor (👀 ${issue.votes.monitor})</button>
-    </div>
-    <div class="comment-list">${comments || "<p>No comments yet.</p>"}</div>
+    <form id="voteForm" class="stack">
+      <label>Cast one vote
+        <select id="voteType">
+          <option value="support">Support</option>
+          <option value="oppose">Oppose</option>
+          <option value="amend">Support with amendments</option>
+        </select>
+      </label>
+      <button type="submit">Submit vote</button>
+    </form>
+    <div class="comment-list">${comments}</div>
     <form id="commentForm" class="stack">
-      <input id="commentInput" placeholder="Share your idea for action..." required />
+      <input id="commentInput" placeholder="Add constructive comment" required />
       <button type="submit">Post comment</button>
     </form>
   `;
 
-  els.activeIssue.querySelectorAll("button[data-vote]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const type = btn.dataset.vote;
-      issue.votes[type] += 1;
-      addPoints(5);
-      save();
-      renderAll();
-    });
+  els.activeIssue.querySelector("#voteForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const vote = els.activeIssue.querySelector("#voteType").value;
+    issue.votes[vote] += 1;
+    addPoints(6);
+    save();
+    renderAll();
+    showDiscussionView();
   });
 
-  const commentForm = els.activeIssue.querySelector("#commentForm");
-  commentForm.addEventListener("submit", (event) => {
+  els.activeIssue.querySelector("#commentForm").addEventListener("submit", (event) => {
     event.preventDefault();
     const value = els.activeIssue.querySelector("#commentInput").value.trim();
     if (!value) return;
     issue.comments.unshift(value);
-    addPoints(8);
+    addPoints(7);
     save();
     renderAll();
+    showDiscussionView();
   });
 }
 
@@ -281,9 +306,8 @@ function renderGameStats() {
     ["Public Trust", "trust"],
     ["Wellbeing", "wellbeing"],
     ["Environment", "environment"],
-    ["Misinformation Risk", "misinformation"]
+    ["Misinformation", "misinformation"]
   ];
-
   els.statsPanel.innerHTML = entries
     .map(([label, key]) => {
       const value = state.game.stats[key];
@@ -294,70 +318,64 @@ function renderGameStats() {
 
 function renderGameRound() {
   renderGameStats();
+  if (state.game.round >= gameScenarios.length) {
+    const s = state.game.stats;
+    const score = s.youthVoice + s.trust + s.wellbeing + s.environment - s.misinformation;
+    const outcome = score > 170
+      ? "Winning ending: students and adults co-produced policy change."
+      : score > 120
+        ? "Middle ending: some wins, but stronger evidence and coalition work are needed."
+        : "Weak ending: low trust and misinformation blocked outcomes.";
 
-  if (state.game.round >= state.game.scenarios.length) {
-    const stats = state.game.stats;
-    const score = stats.youthVoice + stats.trust + stats.wellbeing + stats.environment - stats.misinformation;
-    const ending = score >= 180
-      ? "Strong civic ending: your town responds because students organized, used facts, and stayed involved."
-      : score >= 120
-        ? "Mixed ending: some progress happened, but better coordination and evidence could increase impact."
-        : "Low-impact ending: misinformation and disengagement weakened change. Participation strategy matters.";
-
-    els.roundLabel.textContent = "Final reflection";
-    els.scenarioTitle.textContent = "Game complete";
-    els.scenarioDescription.textContent = "Democracy is a chain of everyday choices, not a one-time vote.";
-    els.choicesList.innerHTML = '<button id="restartGameBtn" type="button">Play again</button>';
-    els.gameFeedback.textContent = `${ending}\n\nKey lesson: organised action + accurate information gives youth voices more power.`;
-    document.querySelector("#restartGameBtn").addEventListener("click", () => startGame());
+    els.roundLabel.textContent = "Final outcome";
+    els.scenarioTitle.textContent = "Democracy is practical, not abstract.";
+    els.scenarioDescription.textContent = "One ignored email can become action when students organize together.";
+    els.choiceSelect.innerHTML = "<option>Replay to improve your ending</option>";
+    els.confirmChoiceBtn.textContent = "Play again";
+    els.gameFeedback.textContent = `${outcome}\n\nUnique pitch idea: Youth Mandate Brief merges student votes + evidence into a decision-ready summary adults can act on.`;
     return;
   }
 
-  const scenario = state.game.scenarios[state.game.round];
-  els.roundLabel.textContent = `Round ${state.game.round + 1} of ${state.game.scenarios.length}`;
+  const scenario = gameScenarios[state.game.round];
+  els.roundLabel.textContent = `Round ${state.game.round + 1} of ${gameScenarios.length}`;
   els.scenarioTitle.textContent = scenario.title;
   els.scenarioDescription.textContent = scenario.description;
-
-  els.choicesList.innerHTML = "";
-  scenario.choices.forEach((choice, index) => {
-    const button = document.createElement("button");
-    button.className = "choice-btn";
-    button.type = "button";
-    button.textContent = `${index + 1}. ${choice.label}`;
-    button.addEventListener("click", () => chooseGameOption(choice));
-    els.choicesList.append(button);
-  });
+  els.confirmChoiceBtn.textContent = "Confirm choice";
+  els.choiceSelect.innerHTML = scenario.choices.map((choice, index) => `<option value="${index}">${choice.label}</option>`).join("");
 }
 
-function chooseGameOption(choice) {
+function handleGameChoice() {
+  if (state.game.round >= gameScenarios.length) {
+    startGame();
+    return;
+  }
+  const scenario = gameScenarios[state.game.round];
+  const selected = Number(els.choiceSelect.value || 0);
+  const choice = scenario.choices[selected];
   Object.keys(state.game.stats).forEach((key) => {
     state.game.stats[key] = clampStat(state.game.stats[key] + (choice.effects[key] || 0));
   });
-
-  state.game.history.push({ round: state.game.round, choice: choice.label });
   els.gameFeedback.textContent = choice.explanation;
   state.game.round += 1;
-  addPoints(6);
+  addPoints(5);
   renderGameRound();
 }
 
 function startGame() {
-  state.game.playing = true;
   state.game.round = 0;
-  state.game.history = [];
-  state.game.stats = {
-    youthVoice: 50,
-    trust: 50,
-    wellbeing: 50,
-    environment: 50,
-    misinformation: 50
-  };
-  els.gameFeedback.textContent = "Make a choice to see what changes.";
+  state.game.stats = { youthVoice: 50, trust: 50, wellbeing: 50, environment: 50, misinformation: 50 };
+  els.gameFeedback.textContent = "Make a choice to see consequences.";
   showGameView();
   renderGameRound();
 }
 
-function attachGlobalEvents() {
+function generateBrief() {
+  const top = [...state.issues].sort((a, b) => b.votes.support - a.votes.support)[0];
+  const participation = state.participationTrend[state.participationTrend.length - 1];
+  els.actionOutput.textContent = `Youth Mandate Brief\n-------------------\nTop debated item: ${top.title}\nBody handling it: ${top.chamber}\nStudent support: ${top.votes.support}\nParticipation trend: ${participation}%\n\nRecommended action:\n1) Schedule a youth-adult hearing within 14 days.\n2) Publish evidence response timeline.\n3) Pilot one measurable policy change this term.`;
+}
+
+function attachEvents() {
   els.authForm.addEventListener("submit", (event) => {
     event.preventDefault();
     state.user = {
@@ -372,53 +390,37 @@ function attachGlobalEvents() {
     renderAll();
   });
 
-  els.startGameBtn.addEventListener("click", startGame);
-  els.exitGameBtn.addEventListener("click", showHomeView);
-
   els.issuesList.addEventListener("click", (event) => {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
-    const issueId = target.dataset.open;
-    if (!issueId) return;
-    state.selectedIssueId = issueId;
+    if (!target.dataset.open) return;
+    state.selectedIssueId = target.dataset.open;
     renderActiveIssue();
     showDiscussionView();
   });
 
   els.backToHomeBtn.addEventListener("click", showHomeView);
+  els.startGameBtn.addEventListener("click", startGame);
+  els.exitGameBtn.addEventListener("click", showHomeView);
+  els.confirmChoiceBtn.addEventListener("click", handleGameChoice);
+  els.briefBtn.addEventListener("click", generateBrief);
 
   els.issueForm.addEventListener("submit", (event) => {
     event.preventDefault();
-    const newIssue = {
+    state.issues.unshift({
       id: crypto.randomUUID(),
       title: els.issueTitle.value.trim(),
+      chamber: "Pending youth-policy review",
       location: els.issueLocation.value.trim(),
       why: els.issueWhy.value.trim(),
-      votes: { urgent: 0, monitor: 0 },
-      comments: [],
-      createdBy: state.user?.name || "Guest"
-    };
-    state.issues.unshift(newIssue);
-    state.selectedIssueId = newIssue.id;
-    addPoints(12);
-    save();
+      votes: { support: 0, oppose: 0, amend: 0 },
+      comments: ["Awaiting moderation for debate cycle."],
+      status: "Submitted"
+    });
     els.issueForm.reset();
+    addPoints(8);
+    save();
     renderAll();
-    showDiscussionView();
-  });
-
-  els.emailBtn.addEventListener("click", () => {
-    const top = [...state.issues].sort((a, b) => b.votes.urgent - a.votes.urgent)[0];
-    els.actionOutput.textContent = `Subject: Student request for action on ${top.title}\n\nDear Council Team,\n\nWe are students using Campus Voice. ${top.votes.urgent} students marked this issue urgent: ${top.why}\n\nPlease confirm next steps and timeline for investigation.\n\nKind regards,\nCampus Voice Student Community`;
-  });
-
-  els.petitionBtn.addEventListener("click", () => {
-    const topThree = [...state.issues]
-      .sort((a, b) => b.votes.urgent - a.votes.urgent)
-      .slice(0, 3)
-      .map((i, idx) => `${idx + 1}. ${i.title} (${i.votes.urgent} urgent votes)`)
-      .join("\n");
-    els.actionOutput.textContent = `Petition Summary\n----------------\nTop student concerns this week:\n${topThree}\n\nRequested action: host a youth-council listening session and publish public responses within 30 days.`;
   });
 }
 
@@ -426,9 +428,10 @@ function renderAll() {
   renderProfile();
   renderIssues();
   renderActiveIssue();
+  renderCharts();
 }
 
 load();
-attachGlobalEvents();
+attachEvents();
 showHomeView();
 renderAll();
