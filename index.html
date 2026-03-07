@@ -3,106 +3,87 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Campus Voice MVP</title>
+    <title>Campus Voice Data MVP</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <header class="topbar">
       <div>
-        <h1>🗳️ Campus Voice</h1>
-        <p>Make student voice count in real government debates.</p>
+        <h1>📊 Campus Voice</h1>
+        <p>Real public issues, translated for students.</p>
       </div>
       <div id="profilePill" class="profile-pill hidden"></div>
     </header>
 
     <main id="homeView" class="layout">
-      <section class="panel" id="authPanel">
-        <h2>Join in seconds</h2>
-        <form id="authForm" class="stack">
-          <label>Name <input id="nameInput" required placeholder="e.g. Maya Singh" /></label>
-          <label>
-            Education level
-            <select id="levelInput">
-              <option>Secondary School</option>
-              <option>A-level</option>
-              <option>University</option>
-            </select>
-          </label>
-          <button type="submit">Join Campus Voice</button>
+      <section class="panel hero">
+        <h2>Student Civic Intelligence Platform</h2>
+        <p>
+          We turn official UK public issues into youth-friendly issue cards, evidence snapshots,
+          and voting dashboards so students can prioritise what matters.
+        </p>
+        <form id="authForm" class="inline-form">
+          <input id="nameInput" required placeholder="Your name" />
+          <select id="levelInput">
+            <option>Secondary School</option>
+            <option>A-level</option>
+            <option>University</option>
+          </select>
+          <button type="submit">Join</button>
         </form>
       </section>
 
-      <section class="panel" id="issuesPanel">
+      <section class="panel">
         <div class="split-head">
-          <h2>Government debates now</h2>
+          <h2>Real-Issue Explorer</h2>
           <span id="issueCount" class="badge"></span>
         </div>
-        <p class="muted">These are live policy topics councils/parliament are actively debating.</p>
+        <div class="filters">
+          <select id="areaFilter"></select>
+          <select id="categoryFilter"></select>
+          <select id="sortFilter">
+            <option value="trending">Sort: Trending</option>
+            <option value="support">Sort: Most supported</option>
+            <option value="official">Sort: Biggest official gap</option>
+          </select>
+        </div>
         <div id="issuesList" class="issues-grid"></div>
       </section>
 
-      <section class="panel" id="gameIntroPanel">
-        <h2>🎮 Your Town, Your Choices</h2>
-        <p class="muted">A 4-round simulation showing how civic choices change real outcomes.</p>
-        <button id="startGameBtn" type="button">Play civic simulation</button>
-      </section>
-
-      <section class="panel" id="insightPanel">
-        <div class="split-head">
-          <h2>Policy insight dashboard</h2>
-          <button id="briefBtn" type="button">Generate Youth Mandate Brief</button>
-        </div>
+      <section class="panel">
+        <h2>Stats Dashboard</h2>
+        <div class="scorecards" id="scorecards"></div>
         <div class="chart-grid">
           <article>
-            <h3>Support by issue</h3>
-            <canvas id="supportChart" width="420" height="220"></canvas>
+            <h3>Top priorities (student votes)</h3>
+            <canvas id="priorityChart" width="420" height="220"></canvas>
           </article>
           <article>
-            <h3>Youth participation trend</h3>
-            <canvas id="trendChart" width="420" height="220"></canvas>
+            <h3>Student vs official priority</h3>
+            <canvas id="gapChart" width="420" height="220"></canvas>
           </article>
         </div>
-        <pre id="actionOutput" class="output">Your one-page youth mandate brief appears here.</pre>
       </section>
 
-      <section class="panel" id="submitPanel">
-        <h2>Submit issue for next debate cycle</h2>
-        <form id="issueForm" class="stack">
-          <label>Issue title <input id="issueTitle" required /></label>
-          <label>Location <input id="issueLocation" required /></label>
-          <label>Why this matters <textarea id="issueWhy" rows="3" required></textarea></label>
-          <button type="submit">Submit for review</button>
-        </form>
-      </section>
-    </main>
-
-    <main id="discussionView" class="focused-view hidden">
-      <section class="panel focused-shell">
-        <div class="split-head">
-          <h2>Debate room</h2>
-          <button id="backToHomeBtn" type="button">← Back</button>
-        </div>
-        <div id="activeIssue"></div>
+      <section class="panel">
+        <h2>Why this matters</h2>
+        <ul>
+          <li>Local decisions shape buses, air quality, libraries, and safety.</li>
+          <li>Evidence-backed participation is stronger than isolated complaints.</li>
+          <li>Misinformation can push attention away from real solutions.</li>
+        </ul>
+        <button id="briefBtn" type="button">Generate Youth Mandate Brief</button>
+        <pre id="briefOutput" class="output">Brief output appears here.</pre>
       </section>
     </main>
 
-    <main id="gameView" class="focused-view hidden">
+    <main id="detailView" class="focused-view hidden">
       <section class="panel focused-shell">
         <div class="split-head">
-          <h2>Your Town, Your Choices</h2>
-          <button id="exitGameBtn" type="button">← Exit</button>
+          <h2>Issue Detail</h2>
+          <button id="backBtn" type="button">← Back to dashboard</button>
         </div>
-        <p class="muted" id="roundLabel"></p>
-        <div id="statsPanel" class="stats-grid"></div>
-        <article class="scenario-card">
-          <h3 id="scenarioTitle"></h3>
-          <p id="scenarioDescription"></p>
-        </article>
-        <label class="stack">Choose your action
-          <select id="choiceSelect"></select>
-        </label>
-        <button id="confirmChoiceBtn" type="button">Confirm choice</button>
-        <pre id="gameFeedback" class="output">Make a choice to see consequences.</pre>
+        <article id="detailCard"></article>
       </section>
     </main>
 

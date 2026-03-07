@@ -1,123 +1,84 @@
-const STORAGE_KEY = "campus-voice-mvp";
+const STORAGE_KEY = "campus-voice-data-mvp";
 
-const debatedIssues = [
+const SAMPLE_ISSUES = [
   {
-    id: crypto.randomUUID(),
-    title: "River Cam boat emissions regulation",
+    id: "cam-river-air",
+    title: "River Cam boat emissions and air quality",
+    location: "Cambridge",
+    category: "Environment",
+    source: "Cambridge City Council environment reports + resident complaints",
     chamber: "Cambridge City Council Environment Committee",
-    location: "Cambridge, River Cam",
-    why: "Boat smoke is affecting air quality and residents report gas-like smell up to about a mile away.",
-    votes: { support: 18, oppose: 3, amend: 7 },
-    comments: [
-      "Add emission checks for tourist boats.",
-      "Students can gather air-quality logs near colleges."
+    officialPriority: 52,
+    studentVotes: { high: 62, medium: 14, low: 4 },
+    credibility: 92,
+    whyItMatters: "Air quality affects respiratory health, comfort at home, and trust in local services.",
+    evidence: [
+      "Resident reports of gas-like smell near River Cam.",
+      "Repeated student concerns and ignored complaint case.",
+      "Need for emissions compliance checks for river boats."
     ],
-    status: "Debate this month"
+    actions: [
+      "Submit evidence pack to committee chair.",
+      "Request public emissions monitoring update.",
+      "Organise cross-school testimony session."
+    ],
+    comments: ["Include low-cost sensor data from schools.", "Add timeline tracking for council response."]
   },
   {
-    id: crypto.randomUUID(),
-    title: "National debate: reduced bus fares for under-21s",
+    id: "uk-bus-fares",
+    title: "Reduced under-21 bus fares",
+    location: "UK",
+    category: "Transport",
+    source: "UK Parliament transport consultations + local authority data",
     chamber: "UK Parliament Transport Committee",
-    location: "England",
-    why: "Rising fares reduce attendance and access to opportunities for students.",
-    votes: { support: 16, oppose: 4, amend: 6 },
-    comments: ["Need a means-tested cap.", "Pilot in university towns first."],
-    status: "Evidence gathering stage"
+    officialPriority: 65,
+    studentVotes: { high: 55, medium: 21, low: 9 },
+    credibility: 88,
+    whyItMatters: "Transport costs affect attendance, opportunities, and cost-of-living pressure.",
+    evidence: [
+      "Fare increases linked to lower student mobility in commuter areas.",
+      "Student-led polling suggests demand for capped youth fares."
+    ],
+    actions: ["Submit youth fare impact statement.", "Support pilot routes in education hubs."],
+    comments: ["Needs means-tested support option."]
   },
   {
-    id: crypto.randomUUID(),
-    title: "Youth access to extended library hours",
-    chamber: "County Education & Skills Board",
+    id: "county-library-hours",
+    title: "Extended library study hours",
     location: "Cambridgeshire",
-    why: "Exam-season pressure is high and many students lack quiet study spaces at home.",
-    votes: { support: 12, oppose: 2, amend: 8 },
-    comments: ["Trial 2 evenings a week.", "Coordinate volunteers for safe late exit."],
-    status: "Public consultation open"
-  }
-];
-
-const gameScenarios = [
-  {
-    title: "River Cam pollution",
-    description: "A complaint was ignored. What do students do next?",
-    choices: [
-      {
-        label: "Do nothing",
-        effects: { youthVoice: -8, trust: -7, wellbeing: -6, environment: -7, misinformation: 3 },
-        explanation: "Inaction keeps pollution and frustration high."
-      },
-      {
-        label: "Gather evidence + photos with students",
-        effects: { youthVoice: 10, trust: 8, wellbeing: 4, environment: 7, misinformation: -5 },
-        explanation: "Evidence increases credibility and policy traction."
-      },
-      {
-        label: "Spread an unverified rumour",
-        effects: { youthVoice: -2, trust: -11, wellbeing: -3, environment: -2, misinformation: 13 },
-        explanation: "False claims damage trust and derail progress."
-      }
-    ]
+    category: "Education",
+    source: "County consultations on education and skills",
+    chamber: "County Education & Skills Board",
+    officialPriority: 41,
+    studentVotes: { high: 49, medium: 24, low: 8 },
+    credibility: 85,
+    whyItMatters: "Study-space access affects attainment, wellbeing, and exam equity.",
+    evidence: ["High exam season usage demand.", "Students lacking quiet home study space."],
+    actions: ["Propose 8-week pilot extension.", "Co-design safety plan for late exits."],
+    comments: ["Evening buses must align with hours."]
   },
   {
-    title: "Bus fares debate",
-    description: "Students are struggling to travel to classes.",
-    choices: [
-      {
-        label: "Run a youth poll and submit impact data",
-        effects: { youthVoice: 9, trust: 7, wellbeing: 8, environment: 3, misinformation: -4 },
-        explanation: "Data-backed participation strengthens the case."
-      },
-      {
-        label: "Only post angry comments online",
-        effects: { youthVoice: 1, trust: -3, wellbeing: -2, environment: 0, misinformation: 6 },
-        explanation: "Awareness grows, but decision-makers need evidence."
-      }
-    ]
-  },
-  {
-    title: "Local safety budget",
-    description: "Council is reallocating funds that affect student safety routes.",
-    choices: [
-      {
-        label: "Attend hearing with a student coalition",
-        effects: { youthVoice: 10, trust: 9, wellbeing: 7, environment: 0, misinformation: -3 },
-        explanation: "Collective engagement increases influence with adults in power."
-      },
-      {
-        label: "Leave it to others",
-        effects: { youthVoice: -7, trust: -6, wellbeing: -5, environment: 0, misinformation: 2 },
-        explanation: "Not participating still has consequences."
-      }
-    ]
-  },
-  {
-    title: "Library hours decision",
-    description: "A final vote is coming on extended study hours.",
-    choices: [
-      {
-        label: "Submit compromise plan + petition",
-        effects: { youthVoice: 11, trust: 8, wellbeing: 10, environment: 0, misinformation: -2 },
-        explanation: "Constructive solutions are easier to adopt quickly."
-      },
-      {
-        label: "Call the process fake without proof",
-        effects: { youthVoice: -3, trust: -10, wellbeing: -4, environment: 0, misinformation: 10 },
-        explanation: "Distrust without facts weakens real advocacy."
-      }
-    ]
+    id: "district-housing-warmth",
+    title: "Rental housing warmth and damp checks",
+    location: "East of England",
+    category: "Housing",
+    source: "Local authority housing standards datasets",
+    chamber: "District Housing Review Panel",
+    officialPriority: 58,
+    studentVotes: { high: 44, medium: 25, low: 11 },
+    credibility: 81,
+    whyItMatters: "Poor housing conditions affect health, concentration, and absenteeism.",
+    evidence: ["Rising complaints on damp in low-cost rentals.", "Cold housing linked to reduced learning outcomes."],
+    actions: ["Request mandatory inspection transparency report.", "Targeted support for student-heavy rental zones."],
+    comments: ["Need clearer landlord accountability."]
   }
 ];
 
 const state = {
   user: null,
+  issues: structuredClone(SAMPLE_ISSUES),
   selectedIssueId: null,
-  issues: debatedIssues,
-  game: {
-    round: 0,
-    stats: { youthVoice: 50, trust: 50, wellbeing: 50, environment: 50, misinformation: 50 },
-    choiceIndex: 0
-  },
-  participationTrend: [22, 31, 44, 58, 67]
+  filters: { area: "All areas", category: "All categories", sort: "trending" }
 };
 
 const els = {
@@ -125,30 +86,20 @@ const els = {
   nameInput: document.querySelector("#nameInput"),
   levelInput: document.querySelector("#levelInput"),
   profilePill: document.querySelector("#profilePill"),
-  homeView: document.querySelector("#homeView"),
-  discussionView: document.querySelector("#discussionView"),
-  gameView: document.querySelector("#gameView"),
-  backToHomeBtn: document.querySelector("#backToHomeBtn"),
-  startGameBtn: document.querySelector("#startGameBtn"),
-  exitGameBtn: document.querySelector("#exitGameBtn"),
-  issuesList: document.querySelector("#issuesList"),
   issueCount: document.querySelector("#issueCount"),
-  activeIssue: document.querySelector("#activeIssue"),
-  issueForm: document.querySelector("#issueForm"),
-  issueTitle: document.querySelector("#issueTitle"),
-  issueLocation: document.querySelector("#issueLocation"),
-  issueWhy: document.querySelector("#issueWhy"),
+  issuesList: document.querySelector("#issuesList"),
+  areaFilter: document.querySelector("#areaFilter"),
+  categoryFilter: document.querySelector("#categoryFilter"),
+  sortFilter: document.querySelector("#sortFilter"),
+  scorecards: document.querySelector("#scorecards"),
+  priorityChart: document.querySelector("#priorityChart"),
+  gapChart: document.querySelector("#gapChart"),
   briefBtn: document.querySelector("#briefBtn"),
-  actionOutput: document.querySelector("#actionOutput"),
-  supportChart: document.querySelector("#supportChart"),
-  trendChart: document.querySelector("#trendChart"),
-  roundLabel: document.querySelector("#roundLabel"),
-  statsPanel: document.querySelector("#statsPanel"),
-  scenarioTitle: document.querySelector("#scenarioTitle"),
-  scenarioDescription: document.querySelector("#scenarioDescription"),
-  choiceSelect: document.querySelector("#choiceSelect"),
-  confirmChoiceBtn: document.querySelector("#confirmChoiceBtn"),
-  gameFeedback: document.querySelector("#gameFeedback")
+  briefOutput: document.querySelector("#briefOutput"),
+  homeView: document.querySelector("#homeView"),
+  detailView: document.querySelector("#detailView"),
+  backBtn: document.querySelector("#backBtn"),
+  detailCard: document.querySelector("#detailCard")
 };
 
 function save() {
@@ -159,21 +110,20 @@ function load() {
   const cached = localStorage.getItem(STORAGE_KEY);
   if (!cached) return;
   const parsed = JSON.parse(cached);
-  state.user = parsed.user;
+  state.user = parsed.user || null;
   state.issues = parsed.issues?.length ? parsed.issues : state.issues;
 }
 
-function addPoints(points) {
-  if (!state.user) return;
-  state.user.points += points;
-  state.user.streak = Math.max(1, state.user.streak + 1);
-  if (state.user.points >= 40 && !state.user.badges.includes("Policy Co-Author")) {
-    state.user.badges.push("Policy Co-Author");
-  }
+function totalVotes(issue) {
+  return issue.studentVotes.high + issue.studentVotes.medium + issue.studentVotes.low;
 }
 
-function clampStat(value) {
-  return Math.max(0, Math.min(100, value));
+function studentPriority(issue) {
+  return issue.studentVotes.high * 1 + issue.studentVotes.medium * 0.5;
+}
+
+function priorityGap(issue) {
+  return Math.round(studentPriority(issue) - issue.officialPriority);
 }
 
 function renderProfile() {
@@ -182,28 +132,74 @@ function renderProfile() {
     return;
   }
   els.profilePill.classList.remove("hidden");
-  els.profilePill.textContent = `${state.user.name} • ${state.user.level} • ⭐ ${state.user.points} • 🔥 ${state.user.streak} • 🏅 ${state.user.badges.join(", ") || "No badge yet"}`;
+  els.profilePill.textContent = `${state.user.name} • ${state.user.level} • ${state.user.votesCast} votes cast`;
+}
+
+function filteredIssues() {
+  let data = [...state.issues];
+  if (state.filters.area !== "All areas") data = data.filter((i) => i.location === state.filters.area);
+  if (state.filters.category !== "All categories") data = data.filter((i) => i.category === state.filters.category);
+
+  if (state.filters.sort === "support") data.sort((a, b) => b.studentVotes.high - a.studentVotes.high);
+  if (state.filters.sort === "official") data.sort((a, b) => Math.abs(priorityGap(b)) - Math.abs(priorityGap(a)));
+  if (state.filters.sort === "trending") data.sort((a, b) => totalVotes(b) - totalVotes(a));
+
+  return data;
+}
+
+function renderFilters() {
+  const areas = ["All areas", ...new Set(state.issues.map((i) => i.location))];
+  const categories = ["All categories", ...new Set(state.issues.map((i) => i.category))];
+
+  if (!els.areaFilter.options.length) {
+    els.areaFilter.innerHTML = areas.map((a) => `<option>${a}</option>`).join("");
+    els.categoryFilter.innerHTML = categories.map((c) => `<option>${c}</option>`).join("");
+  }
+
+  els.areaFilter.value = state.filters.area;
+  els.categoryFilter.value = state.filters.category;
+  els.sortFilter.value = state.filters.sort;
 }
 
 function renderIssues() {
-  els.issueCount.textContent = `${state.issues.length} debates`;
+  const data = filteredIssues();
+  els.issueCount.textContent = `${data.length} issues`;
   els.issuesList.innerHTML = "";
-  state.issues.forEach((issue) => {
+  data.forEach((issue) => {
     const card = document.createElement("article");
     card.className = "issue-card";
     card.innerHTML = `
       <h3>${issue.title}</h3>
-      <p class="issue-meta">${issue.chamber} • ${issue.status}</p>
-      <p class="issue-meta">📍 ${issue.location}</p>
-      <p>${issue.why}</p>
-      <p class="issue-meta">Poll: ✅ ${issue.votes.support} | ❌ ${issue.votes.oppose} | ✏️ ${issue.votes.amend}</p>
-      <button data-open="${issue.id}">Open debate room</button>
+      <p class="meta">${issue.location} • ${issue.category} • Credibility ${issue.credibility}/100</p>
+      <p class="meta">${issue.chamber}</p>
+      <p>${issue.whyItMatters}</p>
+      <p class="meta">Student high priority: ${issue.studentVotes.high} | Official priority score: ${issue.officialPriority}</p>
+      <button data-open="${issue.id}">Open issue detail</button>
     `;
     els.issuesList.append(card);
   });
 }
 
-function drawBarChart(canvas, labels, values, color) {
+function scorecardData(data) {
+  const totalStudentVotes = data.reduce((sum, i) => sum + totalVotes(i), 0);
+  const top = [...data].sort((a, b) => b.studentVotes.high - a.studentVotes.high)[0];
+  const trustIndicator = Math.max(35, Math.min(95, Math.round(data.reduce((s, i) => s + i.credibility, 0) / data.length)));
+  const notAlone = top ? top.studentVotes.high : 0;
+  return { totalStudentVotes, top: top?.title || "-", trustIndicator, notAlone };
+}
+
+function renderScorecards() {
+  const data = filteredIssues();
+  const stats = scorecardData(data);
+  els.scorecards.innerHTML = `
+    <div class="scorecard"><strong>${stats.totalStudentVotes}</strong><br />Total student votes</div>
+    <div class="scorecard"><strong>${stats.trustIndicator}%</strong><br />Issue credibility average</div>
+    <div class="scorecard"><strong>${stats.notAlone}</strong><br />You are not alone on top issue</div>
+    <div class="scorecard"><strong>${stats.top}</strong><br />Most voted issue this week</div>
+  `;
+}
+
+function drawBars(canvas, labels, values, color) {
   const ctx = canvas.getContext("2d");
   const w = canvas.width;
   const h = canvas.height;
@@ -212,226 +208,146 @@ function drawBarChart(canvas, labels, values, color) {
   ctx.fillRect(0, 0, w, h);
 
   const max = Math.max(...values, 1);
-  const barW = Math.floor((w - 40) / values.length) - 16;
-  values.forEach((value, i) => {
-    const x = 30 + i * (barW + 16);
-    const barH = Math.floor(((h - 60) * value) / max);
+  const barW = Math.max(20, Math.floor((w - 50) / values.length) - 14);
+
+  values.forEach((value, index) => {
+    const x = 30 + index * (barW + 14);
+    const barH = Math.floor(((h - 55) * value) / max);
     const y = h - 30 - barH;
     ctx.fillStyle = color;
     ctx.fillRect(x, y, barW, barH);
     ctx.fillStyle = "#dbeafe";
     ctx.font = "12px sans-serif";
     ctx.fillText(String(value), x + 4, y - 6);
-    ctx.fillText(labels[i], x, h - 12);
+    ctx.fillText(labels[index], x, h - 10);
   });
 }
 
 function renderCharts() {
-  const supportValues = state.issues.map((i) => i.votes.support);
-  const supportLabels = state.issues.map((_, i) => `D${i + 1}`);
-  drawBarChart(els.supportChart, supportLabels, supportValues, "#38bdf8");
-  drawBarChart(els.trendChart, ["W1", "W2", "W3", "W4", "W5"], state.participationTrend, "#a78bfa");
+  const data = filteredIssues();
+  const labels = data.map((_, index) => `I${index + 1}`);
+  drawBars(els.priorityChart, labels, data.map((i) => i.studentVotes.high), "#38bdf8");
+  drawBars(els.gapChart, labels, data.map((i) => Math.abs(priorityGap(i))), "#a78bfa");
 }
 
-function showHomeView() {
+function showHome() {
   els.homeView.classList.remove("hidden");
-  els.discussionView.classList.add("hidden");
-  els.gameView.classList.add("hidden");
+  els.detailView.classList.add("hidden");
 }
 
-function showDiscussionView() {
+function showDetail() {
   els.homeView.classList.add("hidden");
-  els.discussionView.classList.remove("hidden");
-  els.gameView.classList.add("hidden");
+  els.detailView.classList.remove("hidden");
 }
 
-function showGameView() {
-  els.homeView.classList.add("hidden");
-  els.discussionView.classList.add("hidden");
-  els.gameView.classList.remove("hidden");
-}
-
-function renderActiveIssue() {
+function renderDetail() {
   const issue = state.issues.find((i) => i.id === state.selectedIssueId) || state.issues[0];
   if (!issue) return;
-  state.selectedIssueId = issue.id;
-  const comments = issue.comments.map((comment) => `<div class="comment">💬 ${comment}</div>`).join("");
 
-  els.activeIssue.innerHTML = `
+  const evidenceItems = issue.evidence.map((e) => `<li>${e}</li>`).join("");
+  const actionItems = issue.actions.map((a) => `<li>${a}</li>`).join("");
+  const commentItems = issue.comments.map((c) => `<li>${c}</li>`).join("");
+
+  els.detailCard.innerHTML = `
     <h3>${issue.title}</h3>
-    <p class="issue-meta">${issue.chamber} • ${issue.status}</p>
-    <p>${issue.why}</p>
-    <form id="voteForm" class="stack">
-      <label>Cast one vote
-        <select id="voteType">
-          <option value="support">Support</option>
-          <option value="oppose">Oppose</option>
-          <option value="amend">Support with amendments</option>
-        </select>
-      </label>
+    <p class="meta">${issue.location} • ${issue.category} • ${issue.chamber}</p>
+    <p><strong>Source:</strong> ${issue.source}</p>
+    <p><strong>Why it matters:</strong> ${issue.whyItMatters}</p>
+
+    <div class="detail-evidence">
+      <h4>Evidence snapshot</h4>
+      <ul>${evidenceItems}</ul>
+    </div>
+
+    <div class="detail-evidence">
+      <h4>What students can do</h4>
+      <ul>${actionItems}</ul>
+    </div>
+
+    <div class="detail-evidence">
+      <h4>Youth discussion highlights</h4>
+      <ul>${commentItems}</ul>
+    </div>
+
+    <form id="voteForm" class="vote-line">
+      <select id="voteType">
+        <option value="high">Vote: High priority</option>
+        <option value="medium">Vote: Medium priority</option>
+        <option value="low">Vote: Low priority</option>
+      </select>
       <button type="submit">Submit vote</button>
-    </form>
-    <div class="comment-list">${comments}</div>
-    <form id="commentForm" class="stack">
-      <input id="commentInput" placeholder="Add constructive comment" required />
-      <button type="submit">Post comment</button>
     </form>
   `;
 
-  els.activeIssue.querySelector("#voteForm").addEventListener("submit", (event) => {
+  document.querySelector("#voteForm").addEventListener("submit", (event) => {
     event.preventDefault();
-    const vote = els.activeIssue.querySelector("#voteType").value;
-    issue.votes[vote] += 1;
-    addPoints(6);
+    const voteType = document.querySelector("#voteType").value;
+    issue.studentVotes[voteType] += 1;
+    if (state.user) state.user.votesCast += 1;
     save();
     renderAll();
-    showDiscussionView();
+    showDetail();
   });
-
-  els.activeIssue.querySelector("#commentForm").addEventListener("submit", (event) => {
-    event.preventDefault();
-    const value = els.activeIssue.querySelector("#commentInput").value.trim();
-    if (!value) return;
-    issue.comments.unshift(value);
-    addPoints(7);
-    save();
-    renderAll();
-    showDiscussionView();
-  });
-}
-
-function renderGameStats() {
-  const entries = [
-    ["Youth Voice", "youthVoice"],
-    ["Public Trust", "trust"],
-    ["Wellbeing", "wellbeing"],
-    ["Environment", "environment"],
-    ["Misinformation", "misinformation"]
-  ];
-  els.statsPanel.innerHTML = entries
-    .map(([label, key]) => {
-      const value = state.game.stats[key];
-      return `<div class="stat-box"><div class="stat-row"><span>${label}</span><strong>${value}</strong></div><div class="stat-bar"><div class="stat-fill" style="width:${value}%"></div></div></div>`;
-    })
-    .join("");
-}
-
-function renderGameRound() {
-  renderGameStats();
-  if (state.game.round >= gameScenarios.length) {
-    const s = state.game.stats;
-    const score = s.youthVoice + s.trust + s.wellbeing + s.environment - s.misinformation;
-    const outcome = score > 170
-      ? "Winning ending: students and adults co-produced policy change."
-      : score > 120
-        ? "Middle ending: some wins, but stronger evidence and coalition work are needed."
-        : "Weak ending: low trust and misinformation blocked outcomes.";
-
-    els.roundLabel.textContent = "Final outcome";
-    els.scenarioTitle.textContent = "Democracy is practical, not abstract.";
-    els.scenarioDescription.textContent = "One ignored email can become action when students organize together.";
-    els.choiceSelect.innerHTML = "<option>Replay to improve your ending</option>";
-    els.confirmChoiceBtn.textContent = "Play again";
-    els.gameFeedback.textContent = `${outcome}\n\nUnique pitch idea: Youth Mandate Brief merges student votes + evidence into a decision-ready summary adults can act on.`;
-    return;
-  }
-
-  const scenario = gameScenarios[state.game.round];
-  els.roundLabel.textContent = `Round ${state.game.round + 1} of ${gameScenarios.length}`;
-  els.scenarioTitle.textContent = scenario.title;
-  els.scenarioDescription.textContent = scenario.description;
-  els.confirmChoiceBtn.textContent = "Confirm choice";
-  els.choiceSelect.innerHTML = scenario.choices.map((choice, index) => `<option value="${index}">${choice.label}</option>`).join("");
-}
-
-function handleGameChoice() {
-  if (state.game.round >= gameScenarios.length) {
-    startGame();
-    return;
-  }
-  const scenario = gameScenarios[state.game.round];
-  const selected = Number(els.choiceSelect.value || 0);
-  const choice = scenario.choices[selected];
-  Object.keys(state.game.stats).forEach((key) => {
-    state.game.stats[key] = clampStat(state.game.stats[key] + (choice.effects[key] || 0));
-  });
-  els.gameFeedback.textContent = choice.explanation;
-  state.game.round += 1;
-  addPoints(5);
-  renderGameRound();
-}
-
-function startGame() {
-  state.game.round = 0;
-  state.game.stats = { youthVoice: 50, trust: 50, wellbeing: 50, environment: 50, misinformation: 50 };
-  els.gameFeedback.textContent = "Make a choice to see consequences.";
-  showGameView();
-  renderGameRound();
 }
 
 function generateBrief() {
-  const top = [...state.issues].sort((a, b) => b.votes.support - a.votes.support)[0];
-  const participation = state.participationTrend[state.participationTrend.length - 1];
-  els.actionOutput.textContent = `Youth Mandate Brief\n-------------------\nTop debated item: ${top.title}\nBody handling it: ${top.chamber}\nStudent support: ${top.votes.support}\nParticipation trend: ${participation}%\n\nRecommended action:\n1) Schedule a youth-adult hearing within 14 days.\n2) Publish evidence response timeline.\n3) Pilot one measurable policy change this term.`;
+  const data = filteredIssues();
+  const topThree = [...data]
+    .sort((a, b) => b.studentVotes.high - a.studentVotes.high)
+    .slice(0, 3)
+    .map((item, idx) => `${idx + 1}. ${item.title} (${item.studentVotes.high} high-priority votes)`)
+    .join("\n");
+
+  els.briefOutput.textContent = `Youth Mandate Brief\n-------------------\nTop priorities from student voting:\n${topThree}\n\nRecommendation for adult decision-makers:\n- Publish response timelines for these priorities.\n- Include two youth reps in next committee discussion.\n- Track action progress publicly every 30 days.`;
 }
 
 function attachEvents() {
   els.authForm.addEventListener("submit", (event) => {
     event.preventDefault();
-    state.user = {
-      name: els.nameInput.value.trim(),
-      level: els.levelInput.value,
-      points: 0,
-      streak: 0,
-      badges: []
-    };
-    addPoints(10);
+    state.user = { name: els.nameInput.value.trim(), level: els.levelInput.value, votesCast: 0 };
     save();
+    renderProfile();
+  });
+
+  els.areaFilter.addEventListener("change", () => {
+    state.filters.area = els.areaFilter.value;
+    renderAll();
+  });
+
+  els.categoryFilter.addEventListener("change", () => {
+    state.filters.category = els.categoryFilter.value;
+    renderAll();
+  });
+
+  els.sortFilter.addEventListener("change", () => {
+    state.filters.sort = els.sortFilter.value;
     renderAll();
   });
 
   els.issuesList.addEventListener("click", (event) => {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
-    if (!target.dataset.open) return;
-    state.selectedIssueId = target.dataset.open;
-    renderActiveIssue();
-    showDiscussionView();
+    const issueId = target.dataset.open;
+    if (!issueId) return;
+    state.selectedIssueId = issueId;
+    renderDetail();
+    showDetail();
   });
 
-  els.backToHomeBtn.addEventListener("click", showHomeView);
-  els.startGameBtn.addEventListener("click", startGame);
-  els.exitGameBtn.addEventListener("click", showHomeView);
-  els.confirmChoiceBtn.addEventListener("click", handleGameChoice);
+  els.backBtn.addEventListener("click", showHome);
   els.briefBtn.addEventListener("click", generateBrief);
-
-  els.issueForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-    state.issues.unshift({
-      id: crypto.randomUUID(),
-      title: els.issueTitle.value.trim(),
-      chamber: "Pending youth-policy review",
-      location: els.issueLocation.value.trim(),
-      why: els.issueWhy.value.trim(),
-      votes: { support: 0, oppose: 0, amend: 0 },
-      comments: ["Awaiting moderation for debate cycle."],
-      status: "Submitted"
-    });
-    els.issueForm.reset();
-    addPoints(8);
-    save();
-    renderAll();
-  });
 }
 
 function renderAll() {
   renderProfile();
+  renderFilters();
   renderIssues();
-  renderActiveIssue();
+  renderScorecards();
   renderCharts();
+  renderDetail();
 }
 
 load();
 attachEvents();
-showHomeView();
+showHome();
 renderAll();
